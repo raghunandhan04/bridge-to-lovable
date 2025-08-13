@@ -31,6 +31,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -114,16 +115,8 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       }
 
       setEditingBlog(null);
-      setFormData({
-        title: '',
-        slug: '',
-        content: '',
-        excerpt: '',
-        category: 'general',
-        status: 'draft',
-        featured: false,
-        featured_image_url: ''
-      });
+      setShowCreateForm(false);
+      resetForm();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -133,8 +126,22 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      slug: '',
+      content: '',
+      excerpt: '',
+      category: 'general',
+      status: 'draft',
+      featured: false,
+      featured_image_url: ''
+    });
+  };
+
   const handleEdit = (blog: Blog) => {
     setEditingBlog(blog);
+    setShowCreateForm(true);
     setFormData({
       title: blog.title,
       slug: blog.slug,
@@ -172,9 +179,15 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Blog Management</h2>
-        <Dialog>
+        <Dialog open={showCreateForm || !!editingBlog} onOpenChange={(open) => {
+          if (!open) {
+            setShowCreateForm(false);
+            setEditingBlog(null);
+            resetForm();
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setShowCreateForm(true)}>
               <Plus className="w-4 h-4 mr-2" />
               New Blog
             </Button>
@@ -266,7 +279,14 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
               </div>
 
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setEditingBlog(null)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setEditingBlog(null);
+                    setShowCreateForm(false);
+                    resetForm();
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button onClick={handleSave}>
@@ -279,31 +299,67 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       </div>
 
       <div className="grid gap-4">
-        {blogs.map((blog) => (
-          <Card key={blog.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{blog.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {blog.category} • {blog.status} • {new Date(blog.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => handleEdit(blog)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(blog.id)}>
-                    <Trash className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{blog.excerpt}</p>
-            </CardContent>
+        {blogs.length === 0 ? (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground">No blogs found. Create your first blog post!</p>
           </Card>
-        ))}
+        ) : (
+          blogs.map((blog) => (
+            <Card key={blog.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{blog.title}</CardTitle>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <span className="font-medium capitalize">{blog.category}</span>
+                      <span>•</span>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        blog.status === 'published' ? 'bg-green-100 text-green-800' :
+                        blog.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {blog.status}
+                      </span>
+                      <span>•</span>
+                      <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                      {blog.featured && (
+                        <>
+                          <span>•</span>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Featured</span>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground font-mono mt-1">Slug: /{blog.slug}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(blog)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive" 
+                      onClick={() => handleDelete(blog.id)}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground line-clamp-2">{blog.excerpt}</p>
+                {blog.featured_image_url && (
+                  <div className="mt-3">
+                    <img 
+                      src={blog.featured_image_url} 
+                      alt={blog.title} 
+                      className="w-20 h-20 object-cover rounded border"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
