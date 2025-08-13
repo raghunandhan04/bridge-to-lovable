@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, User, ChevronDown, ChevronRight, Menu, ArrowRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -230,7 +230,7 @@ const Blog = () => {
             )}
           </div>
 
-          {/* Right Sidebar - Featured Blogs */}
+          {/* Right Sidebar - Featured Articles */}
           <div className="lg:col-span-1">
             <Card className="h-full overflow-hidden">
               <CardHeader>
