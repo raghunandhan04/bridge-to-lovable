@@ -563,18 +563,31 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
             </div>
 
             <div>
-              <Label htmlFor="image_url">Image URL</Label>
+              <Label htmlFor="image_url">Media URL (Image/Video)</Label>
               <Input
                 id="image_url"
                 value={formData.image_url}
                 onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                placeholder="Or upload a file below"
+                placeholder="Enter URL or upload below"
               />
               <div className="mt-4">
                 <FileUpload 
                   onFileUploaded={(url) => setFormData({...formData, image_url: url})}
+                  acceptedTypes="image/*,video/*"
                 />
               </div>
+              {formData.image_url && (
+                <div className="mt-4 p-3 border rounded-lg">
+                  <p className="text-sm font-medium mb-2">Preview:</p>
+                  {formData.image_url.includes('youtube.com') || formData.image_url.includes('vimeo.com') ? (
+                    <div className="aspect-video w-full max-w-xs">
+                      <iframe src={formData.image_url} className="w-full h-full rounded" />
+                    </div>
+                  ) : (
+                    <img src={formData.image_url} alt="Preview" className="w-full max-w-xs h-32 object-cover rounded" />
+                  )}
+                </div>
+              )}
             </div>
 
             <div>

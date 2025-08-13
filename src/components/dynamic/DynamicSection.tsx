@@ -98,7 +98,19 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
                   </div>
                 )}
                 {section.image_url && (
-                  <img src={section.image_url} alt={section.title} className="mx-auto max-w-full h-auto rounded-lg shadow-2xl" />
+                  <div className="relative">
+                    {section.image_url.includes('youtube.com') || section.image_url.includes('youtu.be') || section.image_url.includes('vimeo.com') ? (
+                      <div className="aspect-video max-w-4xl mx-auto">
+                        <iframe 
+                          src={section.image_url.includes('youtube.com') ? section.image_url.replace('watch?v=', 'embed/') : section.image_url}
+                          className="w-full h-full rounded-lg shadow-2xl"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : (
+                      <img src={section.image_url} alt={section.title} className="mx-auto max-w-full h-auto rounded-lg shadow-2xl" />
+                    )}
+                  </div>
                 )}
               </div>
             </div>
