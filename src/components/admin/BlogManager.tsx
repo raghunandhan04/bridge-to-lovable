@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash, Eye } from 'lucide-react';
+import { Plus, Edit, Trash, Eye, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { migrateStaticBlogs } from '@/scripts/migrate-static-blogs';
 
 interface Blog {
   id: string;
@@ -43,6 +44,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     featured_image_url: ''
   });
   const { toast } = useToast();
+  const [migrating, setMigrating] = useState(false);
 
   useEffect(() => {
     fetchBlogs();
@@ -173,25 +175,56 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     }
   };
 
+  const handleMigrateBlogs = async () => {
+    if (!confirm('This will migrate static blog content to the database. Continue?')) return;
+    
+    setMigrating(true);
+    try {
+      await migrateStaticBlogs();
+      toast({ 
+        title: "Migration completed!", 
+        description: "Static blogs have been migrated to the database"
+      });
+      fetchBlogs(); // Refresh the list
+    } catch (error: any) {
+      toast({
+        title: "Migration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setMigrating(false);
+    }
+  };
+
   if (loading) return <div>Loading blogs...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Blog Management</h2>
-        <Dialog open={showCreateForm || !!editingBlog} onOpenChange={(open) => {
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={handleMigrateBlogs}
+            disabled={migrating}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            {migrating ? 'Migrating...' : 'Migrate Static Blogs'}
+          </Button>
+          <Dialog open={showCreateForm || !!editingBlog} onOpenChange={(open) => {
           if (!open) {
             setShowCreateForm(false);
             setEditingBlog(null);
             resetForm();
           }
-        }}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setShowCreateForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Blog
-            </Button>
-          </DialogTrigger>
+          }}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setShowCreateForm(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Blog
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingBlog ? 'Edit Blog' : 'Create New Blog'}</DialogTitle>
@@ -296,6 +329,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-4">

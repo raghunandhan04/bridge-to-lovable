@@ -57,93 +57,12 @@ const DynamicBlog = () => {
 
       if (error) throw error;
       
-      // Static blogs from the original site
-      const staticBlogs = [
-        {
-          id: "static-1",
-          title: "The Future of AI in Business Automation: 2024 Trends and Predictions",
-          excerpt: "Explore the latest trends in AI automation and discover how businesses are leveraging intelligent systems to streamline operations, reduce costs, and drive innovation in an increasingly competitive landscape.",
-          content: "Artificial Intelligence continues to revolutionize how businesses operate, with automation leading the charge in digital transformation. In 2024, we're seeing unprecedented adoption rates across industries, from manufacturing to financial services. Companies are leveraging AI to streamline operations, reduce costs, and drive innovation in an increasingly competitive landscape.",
-          category: "AI Trends",
-          status: "published",
-          featured: true,
-          featured_image_url: "",
-          created_at: "2024-01-15T00:00:00Z",
-          slug: "future-ai-business-automation-2024"
-        },
-        {
-          id: "static-2",
-          title: "Case Study: How RetailMax Increased Sales by 300% with AI-Powered Recommendations",
-          excerpt: "Discover how RetailMax transformed their e-commerce platform using our SmartCRM and predictive analytics tools, resulting in unprecedented growth and customer satisfaction rates.",
-          content: "RetailMax, a mid-sized e-commerce company, faced declining sales and customer engagement. By implementing our SmartCRM system and predictive analytics tools, they transformed their customer experience and achieved remarkable results.",
-          category: "Case Studies",
-          status: "published",
-          featured: false,
-          featured_image_url: "",
-          created_at: "2024-01-10T00:00:00Z",
-          slug: "retailmax-case-study-300-percent-growth"
-        },
-        {
-          id: "static-3",
-          title: "Building an AI-First Culture: A Complete Guide for Modern Enterprises",
-          excerpt: "Learn practical strategies for integrating AI into your organizational culture, from employee training and change management to establishing AI governance frameworks that ensure sustainable success.",
-          content: "Creating an AI-first culture requires more than just implementing new technologies. It demands a fundamental shift in how organizations think, operate, and make decisions. This comprehensive guide provides practical strategies for transformation.",
-          category: "Automation",
-          status: "published",
-          featured: false,
-          featured_image_url: "",
-          created_at: "2024-01-05T00:00:00Z",
-          slug: "building-ai-first-culture-guide"
-        },
-        {
-          id: "static-4",
-          title: "Machine Learning in Healthcare: Transforming Patient Care Through AI",
-          excerpt: "Explore how healthcare organizations are using machine learning to improve diagnostic accuracy, optimize treatment plans, and enhance patient outcomes while reducing operational costs.",
-          content: "Healthcare organizations worldwide are embracing machine learning to revolutionize patient care. From diagnostic imaging to personalized treatment plans, AI is enabling healthcare providers to deliver better outcomes while reducing costs.",
-          category: "AI Trends",
-          status: "published",
-          featured: false,
-          featured_image_url: "",
-          created_at: "2023-12-28T00:00:00Z",
-          slug: "machine-learning-healthcare-transformation"
-        },
-        {
-          id: "static-5",
-          title: "ROI Calculator: Measuring the Financial Impact of AI Implementation",
-          excerpt: "A comprehensive guide to calculating and measuring the return on investment for AI initiatives, including key metrics, benchmarks, and real-world examples from successful implementations.",
-          content: "Understanding the financial impact of AI implementation is crucial for business success. This guide provides frameworks, metrics, and real-world examples to help you measure and maximize your AI ROI.",
-          category: "Case Studies",
-          status: "published",
-          featured: false,
-          featured_image_url: "",
-          created_at: "2023-12-20T00:00:00Z",
-          slug: "ai-roi-calculator-financial-impact"
-        },
-        {
-          id: "static-6",
-          title: "Chatbot Best Practices: Creating Conversational AI That Actually Helps",
-          excerpt: "Discover the secrets to building effective chatbots that provide real value to customers, including design principles, training strategies, and integration techniques for maximum impact.",
-          content: "Not all chatbots are created equal. Learn the essential principles and best practices for creating conversational AI that truly helps customers and drives business value.",
-          category: "Automation",
-          status: "published",
-          featured: false,
-          featured_image_url: "",
-          created_at: "2023-12-15T00:00:00Z",
-          slug: "chatbot-best-practices-conversational-ai"
-        }
-      ];
-      
-      // Combine database blogs with static blogs
-      const dynamicBlogs = data || [];
-      const allBlogs = [...dynamicBlogs, ...staticBlogs].sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      
-      setBlogs(allBlogs);
-      setFeaturedBlogs(allBlogs.filter(blog => blog.featured).slice(0, 6));
+      const blogData = data || [];
+      setBlogs(blogData);
+      setFeaturedBlogs(blogData.filter(blog => blog.featured).slice(0, 6));
       
       // Extract unique categories
-      const uniqueCategories = Array.from(new Set(allBlogs.map(blog => blog.category)));
+      const uniqueCategories = Array.from(new Set(blogData.map(blog => blog.category)));
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Error fetching blogs:', error);
