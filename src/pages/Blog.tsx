@@ -143,54 +143,52 @@ const Blog = () => {
                 </Select>
               </div>
             ) : (
-              <Card className="h-full overflow-hidden">
+              <Card className="h-full">
                 <CardHeader>
                   <CardTitle className="text-lg">Categories</CardTitle>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-y-auto h-[calc(100vh-300px)]">
-                    {categories.map((category) => {
-                      const categoryBlogs = getBlogsByCategory(category);
-                      const isExpanded = expandedCategories.has(category);
-                      
-                      return (
-                        <div key={category} className="border-b last:border-b-0">
-                          <button
-                            onClick={() => toggleCategory(category)}
-                            className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-                          >
-                            <span className="font-medium text-left">
-                              {categoryLabels[category as keyof typeof categoryLabels]} ({categoryBlogs.length})
-                            </span>
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
-                          </button>
-                          
-                          {isExpanded && (
-                            <div className="px-4 pb-4 space-y-2">
-                              {categoryBlogs.map((blog) => (
-                                <button
-                                  key={blog.id}
-                                  onClick={() => handleBlogClick(blog)}
-                                  className={`w-full text-left p-3 rounded-lg text-sm hover:bg-muted transition-colors ${
-                                    selectedBlog?.id === blog.id ? 'bg-primary/10 border border-primary/20' : ''
-                                  }`}
-                                >
-                                  <div className="font-medium mb-1 line-clamp-2">{blog.title}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {new Date(blog.created_at).toLocaleDateString()}
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
+                <CardContent className="p-0 overflow-y-auto h-[calc(100vh-300px)]">
+                  {categories.map((category) => {
+                    const categoryBlogs = getBlogsByCategory(category);
+                    const isExpanded = expandedCategories.has(category);
+                    
+                    return (
+                      <div key={category} className="border-b last:border-b-0">
+                        <button
+                          onClick={() => toggleCategory(category)}
+                          className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                        >
+                          <span className="font-medium text-left">
+                            {categoryLabels[category as keyof typeof categoryLabels]} ({categoryBlogs.length})
+                          </span>
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
                           )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                        </button>
+                        
+                        {isExpanded && categoryBlogs.length > 0 && (
+                          <div className="px-4 pb-4 space-y-2 bg-muted/20">
+                            {categoryBlogs.map((blog) => (
+                              <button
+                                key={blog.id}
+                                onClick={() => handleBlogClick(blog)}
+                                className={`w-full text-left p-3 rounded-lg text-sm hover:bg-background transition-colors ${
+                                  selectedBlog?.id === blog.id ? 'bg-primary/10 border border-primary/20' : 'bg-background/50'
+                                }`}
+                              >
+                                <div className="font-medium mb-1 line-clamp-2">{blog.title}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(blog.created_at).toLocaleDateString()}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
             )}
