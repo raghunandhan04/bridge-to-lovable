@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash, Eye, Layout, Zap, BarChart3, Target, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash, Eye, Layout, Zap, BarChart3, Target, GripVertical, Monitor } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { FileUpload } from './FileUpload';
+import { DynamicSection } from '@/components/dynamic/DynamicSection';
 
 interface ContentSection {
   id: string;
@@ -51,6 +52,8 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<SectionTemplate | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewSection, setPreviewSection] = useState<ContentSection | null>(null);
   const [formData, setFormData] = useState({
     section_key: '',
     title: '',
@@ -447,6 +450,13 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
             <Layout className="w-4 h-4 mr-2" />
             Add from Template
           </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setShowPreview(!showPreview)}
+          >
+            <Monitor className="w-4 h-4 mr-2" />
+            {showPreview ? 'Hide Preview' : 'Live Preview'}
+          </Button>
           <Button onClick={() => setShowCreateForm(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Custom Section
@@ -710,14 +720,24 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
                       <p className="text-xs text-muted-foreground font-mono">Key: {section.section_key}</p>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(section)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(section.id)}>
-                      <Trash className="w-4 h-4" />
-                    </Button>
-                  </div>
+                   <div className="flex space-x-2">
+                     <Button 
+                       size="sm" 
+                       variant="outline" 
+                       onClick={() => {
+                         setPreviewSection(section);
+                         setShowPreview(true);
+                       }}
+                     >
+                       <Eye className="w-4 h-4" />
+                     </Button>
+                     <Button size="sm" variant="outline" onClick={() => handleEdit(section)}>
+                       <Edit className="w-4 h-4" />
+                     </Button>
+                     <Button size="sm" variant="destructive" onClick={() => handleDelete(section.id)}>
+                       <Trash className="w-4 h-4" />
+                     </Button>
+                   </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -744,6 +764,40 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
           ))
         )}
       </div>
+
+      {/* Live Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Live Preview{previewSection && ` - ${previewSection.title}`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {showPreview && previewSection ? (
+              <div className="border rounded-lg p-6 bg-background min-h-[400px]">
+                <DynamicSection 
+                  section={previewSection} 
+                />
+              </div>
+            ) : showPreview && !previewSection ? (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold">Page Preview - {selectedPage === 'all' ? 'All Pages' : selectedPage}</h3>
+                {filteredSections.map((section, index) => (
+                  <div key={section.id} className="border rounded-lg p-6 bg-background">
+                    <div className="text-xs text-muted-foreground mb-2">
+                      Section {index + 1}: {section.section_key}
+                    </div>
+                    <DynamicSection 
+                      section={section} 
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
