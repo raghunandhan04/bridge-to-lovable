@@ -16,6 +16,7 @@ const Enterprise = () => {
     email: "",
     company: "",
     teamSize: "",
+    productService: "",
     requirements: ""
   });
 
@@ -32,6 +33,7 @@ const Enterprise = () => {
       email: "",
       company: "",
       teamSize: "",
+      productService: "",
       requirements: ""
     });
   };
@@ -163,6 +165,28 @@ const Enterprise = () => {
                     <SelectItem value="51-100">51-100 users</SelectItem>
                     <SelectItem value="101-500">101-500 users</SelectItem>
                     <SelectItem value="500+">500+ users</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="productService">Product/Service of Interest *</Label>
+                <Select name="productService" value={formData.productService} onValueChange={(value) => setFormData({...formData, productService: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select product or service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="smartcrm">SmartCRM</SelectItem>
+                    <SelectItem value="predictive-sales">Predictive Sales AI</SelectItem>
+                    <SelectItem value="chatbot360">ChatBot 360</SelectItem>
+                    <SelectItem value="email-optimizer">AI Email Optimizer</SelectItem>
+                    <SelectItem value="data-intelligence">Data Intelligence Hub</SelectItem>
+                    <SelectItem value="healthcare">Healthcare Solutions</SelectItem>
+                    <SelectItem value="financial-services">Financial Services</SelectItem>
+                    <SelectItem value="retail-ecommerce">Retail & E-commerce</SelectItem>
+                    <SelectItem value="logistics-supply">Logistics & Supply Chain</SelectItem>
+                    <SelectItem value="custom-solution">Custom AI Solution</SelectItem>
+                    <SelectItem value="multiple-products">Multiple Products</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
