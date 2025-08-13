@@ -34,8 +34,19 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
                 <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                   {section.content}
                 </p>
+                {section.data?.buttons && (
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    {section.data.buttons.map((button: any, index: number) => (
+                      <a key={index} href={button.link}>
+                        <button className={`btn-${button.style} text-lg px-8 py-4`}>
+                          {button.text}
+                        </button>
+                      </a>
+                    ))}
+                  </div>
+                )}
                 {section.image_url && (
-                  <img src={section.image_url} alt={section.title} className="mx-auto max-w-full h-auto" />
+                  <img src={section.image_url} alt={section.title} className="mx-auto max-w-full h-auto rounded-lg shadow-2xl" />
                 )}
               </div>
             </div>
@@ -51,10 +62,73 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{section.content}</p>
               </div>
               {section.image_url && (
-                <div className="flex justify-center">
+                <div className="flex justify-center mb-8">
                   <img src={section.image_url} alt={section.title} className="max-w-full h-auto rounded-lg shadow-lg" />
                 </div>
               )}
+              {section.data?.features && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {section.data.features.map((feature: any, index: number) => (
+                    <Card key={index} className="card-elevated p-6 text-center hover:scale-105 transition-transform duration-300">
+                      <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-white text-2xl">✨</span>
+                      </div>
+                      <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                      <p className="text-muted-foreground">{feature.description}</p>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case 'stats':
+        return (
+          <section className={`py-20 bg-gradient-primary text-white ${className}`}>
+            <div className="container mx-auto px-4 lg:px-8">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-5xl font-bold mb-4">{section.title}</h2>
+                <p className="text-xl opacity-90 max-w-2xl mx-auto">{section.content}</p>
+              </div>
+              {section.data?.stats && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                  {section.data.stats.map((stat: any, index: number) => (
+                    <div key={index} className="space-y-2">
+                      <div className="text-4xl md:text-5xl font-bold">{stat.number}</div>
+                      <div className="text-lg opacity-90">{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case 'cta':
+        return (
+          <section className={`py-20 bg-background ${className}`}>
+            <div className="container mx-auto px-4 lg:px-8 text-center">
+              <div className="max-w-3xl mx-auto space-y-8">
+                <h2 className="text-4xl md:text-5xl font-bold text-hero">{section.title}</h2>
+                <p className="text-xl text-muted-foreground">{section.content}</p>
+                {section.data?.buttons && (
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    {section.data.buttons.map((button: any, index: number) => (
+                      <a key={index} href={button.link}>
+                        <button className={`btn-${button.style} text-lg px-8 py-4`}>
+                          {button.text}
+                        </button>
+                      </a>
+                    ))}
+                  </div>
+                )}
+                {section.image_url && (
+                  <div className="mt-8">
+                    <img src={section.image_url} alt={section.title} className="w-full max-w-2xl mx-auto rounded-lg shadow-lg" />
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         );
@@ -71,10 +145,10 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
               )}
               {section.data && section.data.features && (
                 <ul className="space-y-2">
-                  {section.data.features.map((feature: string, idx: number) => (
+                  {section.data.features.map((feature: any, idx: number) => (
                     <li key={idx} className="flex items-center text-sm">
                       <span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-                      {feature}
+                      {typeof feature === 'string' ? feature : feature.title}
                     </li>
                   ))}
                 </ul>
