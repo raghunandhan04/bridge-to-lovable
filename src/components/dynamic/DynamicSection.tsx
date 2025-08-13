@@ -197,6 +197,110 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
           </section>
         );
 
+      case 'testimonial':
+        return (
+          <section className={`py-20 bg-muted/30 ${className}`}>
+            <div className="container mx-auto px-4 lg:px-8">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-hero mb-4">{section.title}</h2>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{section.content}</p>
+              </div>
+              {section.data?.testimonials && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                  {section.data.testimonials.map((testimonial: any, index: number) => (
+                    <Card key={index} className="p-6">
+                      <p className="text-lg mb-4">"{testimonial.content}"</p>
+                      <div className="flex items-center gap-3">
+                        {testimonial.avatar && <img src={testimonial.avatar} alt={testimonial.name} className="w-10 h-10 rounded-full" />}
+                        <div>
+                          <p className="font-semibold">{testimonial.name}</p>
+                          <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case 'pricing':
+        return (
+          <section className={`py-20 bg-background ${className}`}>
+            <div className="container mx-auto px-4 lg:px-8">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-hero mb-4">{section.title}</h2>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{section.content}</p>
+              </div>
+              {section.data?.plans && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                  {section.data.plans.map((plan: any, index: number) => (
+                    <Card key={index} className={`p-8 ${plan.popular ? 'border-primary scale-105' : ''}`}>
+                      {plan.popular && <div className="bg-primary text-white text-center py-1 mb-4 rounded">Most Popular</div>}
+                      <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                      <div className="text-3xl font-bold mb-6">{plan.price}</div>
+                      <ul className="space-y-3 mb-8">
+                        {plan.features.map((feature: string, idx: number) => (
+                          <li key={idx} className="flex items-center">
+                            <span className="w-2 h-2 bg-primary rounded-full mr-3"></span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                      <button className="w-full btn-primary">Get Started</button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case 'contact':
+        return (
+          <section className={`py-20 bg-muted/30 ${className}`}>
+            <div className="container mx-auto px-4 lg:px-8">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-hero mb-4">{section.title}</h2>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{section.content}</p>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+                <Card className="p-8">
+                  <h3 className="text-2xl font-bold mb-6">Send us a message</h3>
+                  <div className="space-y-4">
+                    <input placeholder="Your Name" className="w-full p-3 border rounded-md" />
+                    <input placeholder="Your Email" className="w-full p-3 border rounded-md" />
+                    <textarea placeholder="Your Message" className="w-full p-3 border rounded-md h-32"></textarea>
+                    <button className="btn-primary">Send Message</button>
+                  </div>
+                </Card>
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold">Get in touch</h3>
+                  {section.data?.email && (
+                    <div>
+                      <h4 className="font-semibold">Email</h4>
+                      <p className="text-muted-foreground">{section.data.email}</p>
+                    </div>
+                  )}
+                  {section.data?.phone && (
+                    <div>
+                      <h4 className="font-semibold">Phone</h4>
+                      <p className="text-muted-foreground">{section.data.phone}</p>
+                    </div>
+                  )}
+                  {section.data?.address && (
+                    <div>
+                      <h4 className="font-semibold">Address</h4>
+                      <p className="text-muted-foreground">{section.data.address}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+
       case 'product':
       case 'solution':
         return (

@@ -104,10 +104,10 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
             visible: true,
             data: {
               features: [
-                { title: 'AI Automation', description: 'Streamline workflows with intelligent automation that learns and adapts to your business needs.', icon: 'Zap' },
-                { title: 'Cloud Solutions', description: 'Scalable cloud infrastructure designed for enterprise-grade AI applications and data processing.', icon: 'Cloud' },
-                { title: 'Advanced Analytics', description: 'Transform data into actionable insights with our powerful AI-driven analytics platform.', icon: 'BarChart3' },
-                { title: 'Machine Learning', description: 'Custom ML models tailored to solve your specific business challenges and opportunities.', icon: 'Cpu' }
+                { title: 'AI Automation', description: 'Streamline workflows with intelligent automation.', icon: 'Zap' },
+                { title: 'Cloud Solutions', description: 'Scalable cloud infrastructure for enterprise applications.', icon: 'Cloud' },
+                { title: 'Advanced Analytics', description: 'Transform data into actionable insights.', icon: 'BarChart3' },
+                { title: 'Machine Learning', description: 'Custom ML models for your business needs.', icon: 'Cpu' }
               ]
             }
           }
@@ -135,16 +135,36 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
           }
         },
         {
+          type: 'testimonial',
+          name: 'Testimonial',
+          icon: <Target className="w-5 h-5" />,
+          description: 'Customer testimonials and reviews',
+          defaultData: {
+            section_type: 'testimonial',
+            title: 'What Our Clients Say',
+            content: 'Real feedback from satisfied customers',
+            section_key: 'home-testimonial',
+            display_order: 4,
+            visible: true,
+            data: {
+              testimonials: [
+                { name: 'John Smith', role: 'CEO, TechCorp', content: 'Amazing results with AI automation!', avatar: '' },
+                { name: 'Jane Doe', role: 'CTO, DataFirm', content: 'Transformed our business operations completely.', avatar: '' }
+              ]
+            }
+          }
+        },
+        {
           type: 'cta',
           name: 'Call to Action',
           icon: <Target className="w-5 h-5" />,
-          description: 'Final section to drive user conversion with compelling call-to-action',
+          description: 'Final section to drive user conversion',
           defaultData: {
             section_type: 'cta',
             title: 'Ready to Transform Your Business?',
-            content: 'Join hundreds of forward-thinking companies already leveraging AI to drive growth and innovation.',
+            content: 'Join hundreds of forward-thinking companies already leveraging AI.',
             section_key: 'home-cta',
-            display_order: 4,
+            display_order: 5,
             visible: true,
             data: {
               buttons: [
@@ -157,35 +177,53 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
       ]
     },
     {
-      path: '/products',
-      name: 'Products Page',
+      path: '/pricing',
+      name: 'Pricing Page',
       sections: [
         {
-          type: 'products-hero',
-          name: 'Products Hero',
-          icon: <Zap className="w-5 h-5" />,
-          description: 'Hero section for products overview',
+          type: 'pricing',
+          name: 'Pricing Table',
+          icon: <Target className="w-5 h-5" />,
+          description: 'Pricing plans and features comparison',
           defaultData: {
-            section_type: 'hero',
-            title: 'Our AI-Powered Solutions',
-            content: 'Discover our comprehensive suite of AI tools designed to transform every aspect of your business.',
-            section_key: 'products-hero',
+            section_type: 'pricing',
+            title: 'Choose Your Plan',
+            content: 'Flexible pricing options for every business size',
+            section_key: 'pricing-table',
             display_order: 1,
-            visible: true
+            visible: true,
+            data: {
+              plans: [
+                { name: 'Starter', price: '$99', features: ['5 Users', 'Basic AI Tools', 'Email Support'] },
+                { name: 'Pro', price: '$299', features: ['25 Users', 'Advanced AI', 'Priority Support'], popular: true },
+                { name: 'Enterprise', price: 'Custom', features: ['Unlimited Users', 'Custom AI Models', '24/7 Support'] }
+              ]
+            }
           }
-        },
+        }
+      ]
+    },
+    {
+      path: '/contact',
+      name: 'Contact Page',
+      sections: [
         {
-          type: 'product-grid',
-          name: 'Product Grid',
+          type: 'contact',
+          name: 'Contact Form',
           icon: <Layout className="w-5 h-5" />,
-          description: 'Grid layout showcasing all products',
+          description: 'Contact form with company information',
           defaultData: {
-            section_type: 'product',
-            title: 'Our Products',
-            content: 'Choose from our range of specialized AI solutions',
-            section_key: 'products-grid',
-            display_order: 2,
-            visible: true
+            section_type: 'contact',
+            title: 'Get in Touch',
+            content: 'Ready to start your AI journey? Contact us today.',
+            section_key: 'contact-form',
+            display_order: 1,
+            visible: true,
+            data: {
+              email: 'contact@hibiz.ai',
+              phone: '+1 (555) 123-4567',
+              address: '123 AI Street, Tech City, TC 12345'
+            }
           }
         }
       ]
