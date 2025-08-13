@@ -9,6 +9,7 @@ import { DynamicSection } from "@/components/dynamic/DynamicSection";
 const Home = () => {
   const [currentSlogan, setCurrentSlogan] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const { sections, loading } = useContentSections('/');
   
   const slogans = [
@@ -69,10 +70,21 @@ const Home = () => {
 
   return (
     <div className="animate-in fade-in duration-700">
+      {/* Admin Toggle */}
+      {localStorage.getItem('supabase.auth.token') && (
+        <Button 
+          className="fixed top-20 right-4 z-50" 
+          variant={isAdminMode ? "default" : "outline"}
+          onClick={() => setIsAdminMode(!isAdminMode)}
+        >
+          {isAdminMode ? "Exit Edit" : "Edit Mode"}
+        </Button>
+      )}
+
       {/* Dynamic Content Sections */}
       {!loading && sections.length > 0 ? (
         sections.map((section) => (
-          <DynamicSection key={section.id} section={section} />
+          <DynamicSection key={section.id} section={section} isAdmin={isAdminMode} />
         ))
       ) : (
         <>

@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Edit, Save, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface ContentSection {
   id: string;
@@ -17,9 +21,29 @@ interface ContentSection {
 interface DynamicSectionProps {
   section: ContentSection;
   className?: string;
+  isAdmin?: boolean;
 }
 
-export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, className = '' }) => {
+export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, className = '', isAdmin = false }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(section.title);
+  const [editContent, setEditContent] = useState(section.content);
+  const { toast } = useToast();
+
+  const handleSave = async () => {
+    try {
+      const { error } = await supabase
+        .from('content_sections')
+        .update({ title: editTitle, content: editContent })
+        .eq('id', section.id);
+      
+      if (error) throw error;
+      toast({ title: "Section updated successfully!" });
+      setIsEditing(false);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
   const renderContent = () => {
     switch (section.section_type) {
       case 'hero':
@@ -27,13 +51,41 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
           <section className={`relative min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background overflow-hidden ${className}`}>
             <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
             <div className="container mx-auto px-4 lg:px-8 text-center relative z-10">
-              <div className="max-w-4xl mx-auto space-y-8">
-                <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-                  <span className="text-gradient">{section.title}</span>
-                </h1>
-                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                  {section.content}
-                </p>
+              <div className="max-w-4xl mx-auto space-y-8 relative">
+                {isAdmin && (
+                  <div className="absolute -top-12 right-0 flex gap-2">
+                    {!isEditing ? (
+                      <Button size="sm" onClick={() => setIsEditing(true)}><Edit className="w-4 h-4" /></Button>
+                    ) : (
+                      <>
+                        <Button size="sm" onClick={handleSave}><Save className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}><X className="w-4 h-4" /></Button>
+                      </>
+                    )}
+                  </div>
+                )}
+                {isEditing ? (
+                  <input 
+                    value={editTitle} 
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="text-5xl md:text-7xl font-bold leading-tight text-gradient bg-transparent border-2 border-dashed border-primary/50 p-2 w-full"
+                  />
+                ) : (
+                  <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+                    <span className="text-gradient">{section.title}</span>
+                  </h1>
+                )}
+                {isEditing ? (
+                  <textarea 
+                    value={editContent} 
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed bg-transparent border-2 border-dashed border-primary/50 p-2 w-full h-32"
+                  />
+                ) : (
+                  <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                    {section.content}
+                  </p>
+                )}
                 {section.data?.buttons && (
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     {section.data.buttons.map((button: any, index: number) => (
