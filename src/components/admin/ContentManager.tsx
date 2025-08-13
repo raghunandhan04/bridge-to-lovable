@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash, Eye, Layout, Zap, BarChart3, Target } from 'lucide-react';
+import { Plus, Edit, Trash, Eye, Layout, Zap, BarChart3, Target, GripVertical } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { FileUpload } from './FileUpload';
 
@@ -360,6 +360,41 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
     }
   };
 
+  const handleReorder = async (draggedId: string, targetId: string, position: 'before' | 'after') => {
+    const draggedSection = contentSections.find(s => s.id === draggedId);
+    const targetSection = contentSections.find(s => s.id === targetId);
+    
+    if (!draggedSection || !targetSection) return;
+
+    const samePage = contentSections.filter(s => s.page_path === draggedSection.page_path);
+    const newOrder = position === 'before' ? targetSection.display_order : targetSection.display_order + 1;
+    
+    try {
+      // Update dragged section order
+      await supabase
+        .from('content_sections')
+        .update({ display_order: newOrder })
+        .eq('id', draggedId);
+
+      // Adjust other sections
+      const updates = samePage
+        .filter(s => s.id !== draggedId)
+        .filter(s => position === 'before' ? s.display_order >= targetSection.display_order : s.display_order > targetSection.display_order)
+        .map(s => ({ id: s.id, display_order: s.display_order + 1 }));
+
+      for (const update of updates) {
+        await supabase
+          .from('content_sections')
+          .update({ display_order: update.display_order })
+          .eq('id', update.id);
+      }
+
+      toast({ title: "Section reordered successfully!" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
   if (loading) return <div>Loading content sections...</div>;
 
   return (
@@ -593,10 +628,26 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
           </Card>
         ) : (
           filteredSections.map((section) => (
-            <Card key={section.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={section.id} 
+              className="hover:shadow-md transition-shadow"
+              draggable
+              onDragStart={(e) => e.dataTransfer.setData('text/plain', section.id)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const draggedId = e.dataTransfer.getData('text/plain');
+                const rect = e.currentTarget.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                const position = e.clientY < midpoint ? 'before' : 'after';
+                handleReorder(draggedId, section.id, position);
+              }}
+            >
               <CardHeader>
                 <div className="flex justify-between items-start">
-                  <div className="space-y-1">
+                  <div className="flex items-start gap-3 flex-1">
+                    <GripVertical className="w-5 h-5 text-muted-foreground mt-1 cursor-grab" />
+                    <div className="space-y-1 flex-1">
                     <CardTitle className="text-lg">{section.title}</CardTitle>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span className="font-medium">{section.page_path}</span>
@@ -605,7 +656,8 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
                       <span>•</span>
                       <span>Order: {section.display_order}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground font-mono">Key: {section.section_key}</p>
+                      <p className="text-xs text-muted-foreground font-mono">Key: {section.section_key}</p>
+                    </div>
                   </div>
                   <div className="flex space-x-2">
                     <Button size="sm" variant="outline" onClick={() => handleEdit(section)}>
