@@ -1,0 +1,12 @@
+Files to update with InlinePricing:
+
+Products (add to import and before CTA):
+- src/pages/products/ChatBot360.tsx (chatbot360)
+- src/pages/products/PredictiveSalesAI.tsx (predictive-sales-ai)  
+- src/pages/products/DataIntelligenceHub.tsx (data-intelligence-hub)
+
+Solutions (add to import and before CTA):
+- src/pages/solutions/Healthcare.tsx (healthcare)
+- src/pages/solutions/LogisticsSupplyChain.tsx (logistics-supply-chain)
+- src/pages/solutions/FinancialServices.tsx (financial-services)  
+- src/pages/solutions/RetailEcommerce.tsx (retail-ecommerce)

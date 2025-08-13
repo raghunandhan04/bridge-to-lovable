@@ -1,0 +1,191 @@
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowRight, Zap, Cloud, BarChart3, Cpu, Users, Award, TrendingUp, ChevronUp } from "lucide-react";
+import { useContentSections } from "@/hooks/useContentSections";
+import { DynamicSection } from "@/components/dynamic/DynamicSection";
+
+const Home = () => {
+  const [currentSlogan, setCurrentSlogan] = useState(0);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const { sections, loading } = useContentSections('/');
+  
+  const slogans = [
+    "Transforming Business with AI Innovation",
+    "Automate, Analyze, Accelerate Growth",
+    "Your Partner in Digital Transformation",
+    "AI Solutions for Modern Enterprises"
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlogan((prev) => (prev + 1) % slogans.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const features = [
+    {
+      icon: Zap,
+      title: "AI Automation",
+      description: "Streamline workflows with intelligent automation that learns and adapts to your business needs."
+    },
+    {
+      icon: Cloud,
+      title: "Cloud Solutions",
+      description: "Scalable cloud infrastructure designed for enterprise-grade AI applications and data processing."
+    },
+    {
+      icon: BarChart3,
+      title: "Advanced Analytics",
+      description: "Transform data into actionable insights with our powerful AI-driven analytics platform."
+    },
+    {
+      icon: Cpu,
+      title: "Machine Learning",
+      description: "Custom ML models tailored to solve your specific business challenges and opportunities."
+    }
+  ];
+
+  const stats = [
+    { number: "500+", label: "Enterprise Clients" },
+    { number: "99.9%", label: "Uptime Guarantee" },
+    { number: "10x", label: "ROI Improvement" },
+    { number: "24/7", label: "Expert Support" }
+  ];
+
+  return (
+    <div className="animate-in fade-in duration-700">
+      {/* Dynamic Content Sections */}
+      {!loading && sections.length > 0 ? (
+        sections.map((section) => (
+          <DynamicSection key={section.id} section={section} />
+        ))
+      ) : (
+        <>
+          {/* Fallback Hero Section */}
+          <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background overflow-hidden">
+            <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+            <div className="container mx-auto px-4 lg:px-8 text-center relative z-10">
+              <div className="max-w-4xl mx-auto space-y-8">
+                <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+                  <span className="text-gradient">
+                    {slogans[currentSlogan]}
+                  </span>
+                </h1>
+                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  Empower your business with cutting-edge AI solutions designed to automate processes, 
+                  unlock insights, and drive unprecedented growth.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <Link to="/contact">
+                    <Button className="btn-hero text-lg px-8 py-4">
+                      Get Started <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </Link>
+                  <Link to="/solutions">
+                    <Button className="btn-outline text-lg px-8 py-4">
+                      Explore Solutions
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Features Section */}
+          <section className="py-20 bg-muted/30">
+            <div className="container mx-auto px-4 lg:px-8">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-hero mb-4">
+                  Why Choose Hibiz.ai?
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                  Our comprehensive AI platform delivers measurable results across all business functions
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {features.map((feature, index) => (
+                  <Card key={index} className="card-elevated p-6 text-center hover:scale-105 transition-transform duration-300">
+                    <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                      <feature.icon className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Stats Section */}
+          <section className="py-20 bg-gradient-primary text-white">
+            <div className="container mx-auto px-4 lg:px-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                {stats.map((stat, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="text-4xl md:text-5xl font-bold">{stat.number}</div>
+                    <div className="text-lg opacity-90">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* CTA Section */}
+          <section className="py-20 bg-background">
+            <div className="container mx-auto px-4 lg:px-8 text-center">
+              <div className="max-w-3xl mx-auto space-y-8">
+                <h2 className="text-4xl md:text-5xl font-bold text-hero">
+                  Ready to Transform Your Business?
+                </h2>
+                <p className="text-xl text-muted-foreground">
+                  Join hundreds of forward-thinking companies already leveraging AI to drive growth and innovation.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link to="/contact">
+                    <Button className="btn-hero text-lg px-8 py-4">
+                      Start Your AI Journey
+                    </Button>
+                  </Link>
+                  <Link to="/pricing">
+                    <Button className="btn-secondary text-lg px-8 py-4">
+                      View Pricing
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* Back to Top Button */}
+      {showBackToTop && (
+        <Button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90"
+          size="icon"
+        >
+          <ChevronUp className="h-5 w-5" />
+        </Button>
+      )}
+    </div>
+  );
+};
+
+export default Home;
