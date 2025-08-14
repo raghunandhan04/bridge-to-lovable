@@ -17,11 +17,11 @@ const Layout = ({ children }: LayoutProps) => {
       <Navigation />
       <main className="flex-1 pt-16 relative">
         {/* Global Back Button */}
-        <div className="absolute top-4 right-4 z-10">
+        <div className="fixed top-20 right-4 z-50">
           <Button 
             variant="outline" 
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 bg-background/80 backdrop-blur-sm border shadow-sm hover:shadow-md transition-shadow"
+            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Hibiz.ai
