@@ -192,9 +192,9 @@ const DynamicBlog = () => {
             )}
             
             <div 
-              className="content"
+              className="prose prose-lg max-w-none content"
               dangerouslySetInnerHTML={{ 
-                __html: selectedBlog.content.replace(/\n/g, '<br>') 
+                __html: selectedBlog.content 
               }}
             />
           </article>
