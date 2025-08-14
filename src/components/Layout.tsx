@@ -28,9 +28,9 @@ const Layout = ({ children }: LayoutProps) => {
           variant="outline"
           size="sm"
           onClick={handleBack}
-          className="fixed top-20 left-4 z-40 bg-background/95 backdrop-blur-sm border border-border/50 hover:bg-accent shadow-sm flex items-center gap-2"
+          className="fixed top-24 left-6 z-50 bg-background/90 backdrop-blur-md border border-border/40 hover:bg-accent/90 shadow-lg transition-all duration-200 flex items-center gap-2 text-xs px-3 py-1.5 min-w-fit"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-3.5 w-3.5" />
           Back
         </Button>
       )}
