@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Download, Calendar, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { addFeaturedArticles } from '@/scripts/add-featured-articles';
 
 interface Blog {
   id: string;
@@ -59,7 +60,28 @@ const DynamicBlog = () => {
       
       const blogData = data || [];
       setBlogs(blogData);
-      setFeaturedBlogs(blogData.filter(blog => blog.featured).slice(0, 6));
+      const featuredBlogsData = blogData.filter(blog => blog.featured);
+      setFeaturedBlogs(featuredBlogsData);
+      
+      // Auto-add featured articles if we have less than 3
+      if (featuredBlogsData.length < 3) {
+        try {
+          await addFeaturedArticles();
+          // Refetch after adding
+          const { data: newData, error: newError } = await supabase
+            .from('blogs')
+            .select('*')
+            .eq('status', 'published')
+            .order('created_at', { ascending: false });
+          
+          if (!newError && newData) {
+            setBlogs(newData);
+            setFeaturedBlogs(newData.filter(blog => blog.featured));
+          }
+        } catch (addError) {
+          console.log('Featured articles may already exist');
+        }
+      }
       
       // Extract unique categories
       const uniqueCategories = Array.from(new Set(blogData.map(blog => blog.category)));
