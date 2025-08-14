@@ -163,15 +163,6 @@ const SmartCRM = () => {
           </Button>
         </div>
 
-        {/* Back Button */}
-        <div className="text-center">
-          <Link to="/products">
-            <Button variant="outline" className="btn-outline">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Products
-            </Button>
-          </Link>
-        </div>
       </div>
     </div>
   );

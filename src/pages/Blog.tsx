@@ -279,15 +279,6 @@ const Blog = () => {
         </div>
       </div>
 
-      {/* Back Button */}
-      <div className="container mx-auto px-4 lg:px-8 pb-8">
-        <Link to="/">
-          <Button variant="outline" className="btn-outline">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 };

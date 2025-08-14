@@ -10,17 +10,6 @@ const FinancialServices = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 fade-in">
       <div className="container mx-auto px-4 lg:px-8 py-12">
-        {/* Top Back Button */}
-        <div className="flex justify-end mb-8">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Hibiz.ai
-          </Button>
-        </div>
         
         {/* Header */}
         <div className="text-center mb-16">
@@ -139,15 +128,6 @@ const FinancialServices = () => {
           </Button>
         </div>
 
-        {/* Back Button */}
-        <div className="text-center">
-          <Link to="/solutions">
-            <Button variant="outline" className="btn-outline">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Solutions
-            </Button>
-          </Link>
-        </div>
       </div>
     </div>
   );

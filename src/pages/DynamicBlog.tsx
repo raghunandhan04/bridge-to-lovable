@@ -213,14 +213,6 @@ const DynamicBlog = () => {
               Discover insights, trends, and innovations in AI and technology
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Hibiz.ai
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">

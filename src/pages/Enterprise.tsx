@@ -296,15 +296,6 @@ const Enterprise = () => {
           </div>
         </Card>
 
-        {/* Back Button */}
-        <div className="mt-12 text-center">
-          <Link to="/">
-            <Button variant="outline" className="btn-outline">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
       </div>
     </div>
   );
