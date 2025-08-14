@@ -184,11 +184,21 @@ const DynamicBlog = () => {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">Blog</h1>
-          <p className="text-xl text-muted-foreground">
-            Discover insights, trends, and innovations in AI and technology
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-4">Blog</h1>
+            <p className="text-xl text-muted-foreground">
+              Discover insights, trends, and innovations in AI and technology
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Hibiz.ai
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
