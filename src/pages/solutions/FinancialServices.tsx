@@ -1,13 +1,27 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CreditCard, Star, CheckCircle, Shield, TrendingUp, AlertTriangle, Users } from "lucide-react";
 
 const FinancialServices = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 fade-in">
       <div className="container mx-auto px-4 lg:px-8 py-12">
+        {/* Top Back Button */}
+        <div className="flex justify-end mb-8">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Hibiz.ai
+          </Button>
+        </div>
+        
         {/* Header */}
         <div className="text-center mb-16">
           <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-4 py-2 mb-6">
