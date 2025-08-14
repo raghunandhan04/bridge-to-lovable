@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash, Eye, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { migrateStaticBlogs } from '@/scripts/migrate-static-blogs';
+import { addFeaturedArticles } from '@/scripts/add-featured-articles';
 
 interface Blog {
   id: string;
@@ -45,6 +46,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   });
   const { toast } = useToast();
   const [migrating, setMigrating] = useState(false);
+  const [addingFeatured, setAddingFeatured] = useState(false);
 
   useEffect(() => {
     fetchBlogs();
@@ -197,6 +199,28 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     }
   };
 
+  const handleAddFeaturedArticles = async () => {
+    if (!confirm('This will add 2 new featured articles to the database. Continue?')) return;
+    
+    setAddingFeatured(true);
+    try {
+      await addFeaturedArticles();
+      toast({ 
+        title: "Featured articles added!", 
+        description: "2 new featured articles have been added to the database"
+      });
+      fetchBlogs(); // Refresh the list
+    } catch (error: any) {
+      toast({
+        title: "Failed to add featured articles",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setAddingFeatured(false);
+    }
+  };
+
   if (loading) return <div>Loading blogs...</div>;
 
   return (
@@ -211,6 +235,14 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
           >
             <Upload className="w-4 h-4 mr-2" />
             {migrating ? 'Migrating...' : 'Migrate Static Blogs'}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleAddFeaturedArticles}
+            disabled={addingFeatured}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {addingFeatured ? 'Adding...' : 'Add Featured Articles'}
           </Button>
           <Dialog open={showCreateForm || !!editingBlog} onOpenChange={(open) => {
           if (!open) {
@@ -299,6 +331,17 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                       <SelectItem value="archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.featured}
+                      onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                    />
+                    <span>Featured Article</span>
+                  </Label>
                 </div>
 
                 <div>
