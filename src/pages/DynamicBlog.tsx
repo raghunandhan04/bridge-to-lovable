@@ -75,6 +75,8 @@ const DynamicBlog = () => {
     ? blogs 
     : blogs.filter(blog => blog.category === selectedCategory);
 
+  const displayedFeaturedBlogs = featuredBlogs.slice(0, 3);
+
   const handleBlogClick = (blog: Blog) => {
     setSelectedBlog(blog);
   };
@@ -189,8 +191,8 @@ const DynamicBlog = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Categories Sidebar */}
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
@@ -218,71 +220,10 @@ const DynamicBlog = () => {
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>All Articles</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {filteredBlogs.slice(0, 10).map((blog) => (
-                    <div
-                      key={blog.id}
-                      className="p-2 hover:bg-muted rounded cursor-pointer"
-                      onClick={() => handleBlogClick(blog)}
-                    >
-                      <h4 className="font-medium text-sm line-clamp-2">{blog.title}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(blog.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {featuredBlogs.length > 0 && (
-              <div className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">Featured Articles</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredBlogs.map((blog) => (
-                    <Card 
-                      key={blog.id} 
-                      className="cursor-pointer hover:shadow-lg transition-shadow"
-                      onClick={() => handleBlogClick(blog)}
-                    >
-                      {blog.featured_image_url && (
-                        <div className="aspect-video overflow-hidden rounded-t-lg">
-                          <img 
-                            src={blog.featured_image_url} 
-                            alt={blog.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <CardHeader>
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge variant="secondary">{blog.category}</Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(blog.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <CardTitle className="text-lg line-clamp-2">{blog.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground line-clamp-3">
-                          {blog.excerpt || blog.content.substring(0, 150) + '...'}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div>
               <h2 className="text-2xl font-bold mb-6">
                 {selectedCategory === 'all' ? 'All Articles' : `${selectedCategory} Articles`}
@@ -312,6 +253,54 @@ const DynamicBlog = () => {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Featured Articles Sidebar */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle>Featured Articles</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {displayedFeaturedBlogs.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No featured articles available.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {displayedFeaturedBlogs.map((blog) => (
+                      <div 
+                        key={blog.id}
+                        className="cursor-pointer hover:bg-muted p-2 rounded transition-colors"
+                        onClick={() => handleBlogClick(blog)}
+                      >
+                        {blog.featured_image_url && (
+                          <div className="aspect-video overflow-hidden rounded mb-2">
+                            <img 
+                              src={blog.featured_image_url} 
+                              alt={blog.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            Featured
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {blog.category}
+                          </Badge>
+                        </div>
+                        <h3 className="font-medium text-sm leading-tight mb-1 line-clamp-2">
+                          {blog.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(blog.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
