@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import RichTextEditor from '@/components/ui/rich-text-editor';
+import EnhancedRichTextEditor from '@/components/ui/enhanced-rich-text-editor';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash, Eye, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -295,11 +295,15 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
 
               <div>
                 <Label htmlFor="content">Content</Label>
-                <RichTextEditor
+                <EnhancedRichTextEditor
                   value={formData.content}
                   onChange={(content) => setFormData({...formData, content})}
                   placeholder="Write your blog content here..."
                   className="mt-2"
+                  showWordCount={true}
+                  showPreview={true}
+                  autoSave={false}
+                  height="500px"
                 />
               </div>
 

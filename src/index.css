@@ -115,7 +115,83 @@
   }
 }
 
-/* Rich Text Editor Styles */
+/* Enhanced Rich Text Editor Styling */
+.enhanced-rich-text-editor .ql-toolbar {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.enhanced-rich-text-editor .ql-container {
+  border: none !important;
+  font-family: inherit;
+  border-radius: 0 !important;
+}
+
+.enhanced-rich-text-editor .ql-editor {
+  font-family: inherit;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  min-height: 300px;
+  padding: 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.enhanced-rich-text-editor .ql-editor:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+}
+
+.enhanced-rich-text-editor .ql-toolbar .ql-stroke {
+  stroke: hsl(var(--foreground));
+  transition: stroke 0.2s ease;
+}
+
+.enhanced-rich-text-editor .ql-toolbar .ql-fill {
+  fill: hsl(var(--foreground));
+  transition: fill 0.2s ease;
+}
+
+.enhanced-rich-text-editor .ql-toolbar button:hover,
+.enhanced-rich-text-editor .ql-toolbar button:focus,
+.enhanced-rich-text-editor .ql-toolbar button.ql-active {
+  color: hsl(var(--primary)) !important;
+  background: hsl(var(--primary) / 0.1) !important;
+  border-radius: 0.25rem;
+}
+
+.enhanced-rich-text-editor .ql-toolbar button:hover .ql-stroke,
+.enhanced-rich-text-editor .ql-toolbar button:focus .ql-stroke,
+.enhanced-rich-text-editor .ql-toolbar button.ql-active .ql-stroke {
+  stroke: hsl(var(--primary));
+}
+
+.enhanced-rich-text-editor .ql-toolbar button:hover .ql-fill,
+.enhanced-rich-text-editor .ql-toolbar button:focus .ql-fill,
+.enhanced-rich-text-editor .ql-toolbar button.ql-active .ql-fill {
+  fill: hsl(var(--primary));
+}
+
+.enhanced-rich-text-editor .ql-tooltip {
+  background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  color: hsl(var(--popover-foreground));
+}
+
+.enhanced-rich-text-editor .ql-tooltip input {
+  background: hsl(var(--input));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Legacy Rich Text Editor Styles */
 .ql-toolbar {
   border-top: 1px solid hsl(var(--border)) !important;
   border-left: 1px solid hsl(var(--border)) !important;
