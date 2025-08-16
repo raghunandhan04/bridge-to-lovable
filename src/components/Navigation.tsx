@@ -15,6 +15,7 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   const handleBack = () => {
+    console.log('Back button clicked'); // Debug log
     navigate(-1);
   };
 
