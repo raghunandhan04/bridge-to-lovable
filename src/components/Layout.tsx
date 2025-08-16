@@ -23,17 +23,6 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
-      {showBackButton && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleBack}
-          className="fixed top-20 left-4 z-40 bg-background/95 backdrop-blur-sm border border-border/50 hover:bg-accent shadow-sm flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
-      )}
       <main className="flex-1 pt-16">
         {children}
       </main>

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, ArrowLeft } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,14 @@ import {
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  // Don't show back button on home page
+  const showBackButton = location.pathname !== '/';
 
   const products = [
     { name: "SmartCRM", path: "/products/smartcrm" },
@@ -48,13 +56,26 @@ const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 nav-blur">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <span className="text-white font-bold text-xl">H</span>
-            </div>
-            <span className="text-2xl font-bold text-gradient">Hibiz.ai</span>
-          </Link>
+          {/* Logo with Back Button */}
+          <div className="flex items-center space-x-3">
+            {showBackButton && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBack}
+                className="bg-background/95 backdrop-blur-sm border border-border/50 hover:bg-accent shadow-sm flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+            )}
+            <Link to="/" className="flex items-center space-x-2 group">
+              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-bold text-xl">H</span>
+              </div>
+              <span className="text-2xl font-bold text-gradient">Hibiz.ai</span>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
