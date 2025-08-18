@@ -38,17 +38,44 @@ const Home = () => {
   useEffect(() => {
     const applyStoredOverrides = () => {
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith(`content_override_${window.location.pathname}_`)) {
+        if (key.startsWith('static_override_')) {
           try {
             const override = JSON.parse(localStorage.getItem(key) || '{}');
-            if (override.element_path && override.override_text) {
-              const elements = document.querySelectorAll(override.element_path);
+            
+            // Only apply overrides for current page
+            if (override.page_path !== window.location.pathname) return;
+            
+            let elementFound = false;
+            
+            // Try to find element by path first
+            if (override.element_path && !elementFound) {
+              try {
+                const elements = document.querySelectorAll(override.element_path);
+                elements.forEach(element => {
+                  if (element.textContent?.trim() === override.original_text?.trim()) {
+                    element.textContent = override.override_text;
+                    element.setAttribute('data-overridden', 'true');
+                    elementFound = true;
+                  }
+                });
+              } catch (e) {
+                // Path might be invalid, continue to fallback methods
+              }
+            }
+            
+            // Fallback: find by text content and tag name
+            if (!elementFound && override.tag_name && override.original_text) {
+              const elements = document.querySelectorAll(override.tag_name);
               elements.forEach(element => {
-                if (element.textContent?.trim() === override.original_text?.trim()) {
+                if (element.textContent?.trim() === override.original_text.trim() && 
+                    !element.hasAttribute('data-overridden')) {
                   element.textContent = override.override_text;
+                  element.setAttribute('data-overridden', 'true');
+                  elementFound = true;
                 }
               });
             }
+            
           } catch (error) {
             console.warn('Could not apply stored override:', error);
           }
@@ -56,8 +83,11 @@ const Home = () => {
       });
     };
 
-    // Apply overrides after DOM is ready
-    setTimeout(applyStoredOverrides, 100);
+    // Apply overrides after DOM is ready and a short delay to ensure all content is rendered
+    const timeouts = [100, 300, 500]; // Multiple attempts to catch dynamic content
+    timeouts.forEach(delay => {
+      setTimeout(applyStoredOverrides, delay);
+    });
   }, []);
 
   const scrollToTop = () => {

@@ -251,27 +251,34 @@ const LiveWebsitePreview = () => {
           refetch(); // Refresh data
         }
       } else {
-        // For static content, store override in localStorage and apply immediately
+        // For static content, store override in localStorage with multiple identifiers
         const elementPath = getElementPath(editingElement.element);
-        const overrideKey = `content_override_${currentPage}_${elementPath}`;
+        const textContent = editingElement.element.textContent?.trim() || '';
+        const tagName = editingElement.element.tagName.toLowerCase();
         
-        // Store in localStorage
+        // Create a more robust override key
+        const overrideKey = `static_override_${currentPage}_${Date.now()}`;
+        
+        // Store in localStorage with multiple ways to identify the element
         localStorage.setItem(overrideKey, JSON.stringify({
-          original_text: editingElement.value,
-          override_text: editValue,
+          original_text: editingElement.value.trim(),
+          override_text: editValue.trim(),
           element_path: elementPath,
+          tag_name: tagName,
+          text_content: textContent,
+          page_path: currentPage,
           timestamp: Date.now()
         }));
         
         // Apply change immediately
-        const elementToUpdate = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
-        if (elementToUpdate) {
-          elementToUpdate.textContent = editValue;
-        }
+        editingElement.element.textContent = editValue;
+        
+        // Mark element as overridden
+        editingElement.element.setAttribute('data-overridden', 'true');
         
         toast({
           title: "Content Updated",
-          description: "Changes saved and applied to the website.",
+          description: "Changes saved and will persist across page reloads.",
         });
       }
 
@@ -290,12 +297,17 @@ const LiveWebsitePreview = () => {
     const path: string[] = [];
     let current = element;
     
-    while (current && current !== document.body) {
+    while (current && current !== previewRef.current && current !== document.body) {
       let selector = current.tagName.toLowerCase();
       
-      // Add class if available
-      if (current.className) {
-        selector += '.' + current.className.split(' ').join('.');
+      // Add unique identifier if available
+      if (current.id) {
+        selector += `#${current.id}`;
+      } else if (current.className) {
+        const classNames = current.className.split(' ').filter(c => c && !c.includes('hover:')).slice(0, 2);
+        if (classNames.length > 0) {
+          selector += '.' + classNames.join('.');
+        }
       }
       
       // Add position among siblings with same tag
