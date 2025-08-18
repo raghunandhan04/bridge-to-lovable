@@ -213,52 +213,62 @@ const LiveWebsitePreview = () => {
     if (!editingElement) return;
 
     try {
-      // Check if this is a temporary element (static content)
+      // Check if this is a temporary element (new section)
       if (editingElement.sectionId.startsWith('temp-')) {
-        // For static content, just update the text in place without creating new sections
-        const textElement = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
-        if (textElement) {
-          textElement.textContent = editValue;
+        // Create new section
+        const newSection = {
+          section_key: `dynamic-${Date.now()}`,
+          title: editingElement.field === 'title' ? editValue : 'New Section',
+          content: editingElement.field === 'content' ? editValue : '',
+          image_url: '',
+          data: {},
+          section_type: editingElement.field === 'title' ? 'hero' : 'text',
+          page_path: currentPage,
+          display_order: sections.length + 1,
+          visible: true
+        };
+
+        const { error } = await supabase
+          .from('content_sections')
+          .insert([newSection]);
+
+        if (error) throw error;
+
+        toast({
+          title: "New Section Created",
+          description: "Content saved as a new section.",
+        });
+      } else {
+        // Update existing section
+        const section = sections.find(s => s.id === editingElement.sectionId);
+        if (!section) return;
+
+        let updateData: any = {};
+
+        if (editingElement.field === 'title') {
+          updateData.title = editValue;
+        } else if (editingElement.field === 'content') {
+          updateData.content = editValue;
+        } else if (editingElement.field.startsWith('data.')) {
+          const dataKey = editingElement.field.replace('data.', '');
+          updateData.data = {
+            ...section.data,
+            [dataKey]: editValue
+          };
         }
+
+        const { error } = await supabase
+          .from('content_sections')
+          .update(updateData)
+          .eq('id', editingElement.sectionId);
+
+        if (error) throw error;
 
         toast({
           title: "Content Updated",
-          description: "Static content updated in place. Note: This change is temporary and will reset on page reload.",
+          description: "Changes saved successfully.",
         });
-
-        setEditingElement(null);
-        return;
       }
-
-      // Update existing CMS section
-      const section = sections.find(s => s.id === editingElement.sectionId);
-      if (!section) return;
-
-      let updateData: any = {};
-
-      if (editingElement.field === 'title') {
-        updateData.title = editValue;
-      } else if (editingElement.field === 'content') {
-        updateData.content = editValue;
-      } else if (editingElement.field.startsWith('data.')) {
-        const dataKey = editingElement.field.replace('data.', '');
-        updateData.data = {
-          ...section.data,
-          [dataKey]: editValue
-        };
-      }
-
-      const { error } = await supabase
-        .from('content_sections')
-        .update(updateData)
-        .eq('id', editingElement.sectionId);
-
-      if (error) throw error;
-
-      toast({
-        title: "CMS Content Updated",
-        description: "Changes saved successfully to the database.",
-      });
 
       // Update the element text immediately for instant feedback
       const textElement = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
