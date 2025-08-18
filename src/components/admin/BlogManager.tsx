@@ -29,7 +29,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { migrateStaticBlogs } from '@/scripts/migrate-static-blogs';
 import { addFeaturedArticles } from '@/scripts/add-featured-articles';
@@ -434,13 +434,16 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                 New Blog Post
               </Button>
             </DialogTrigger>
-           <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col">
-             <DialogHeader className="pb-4 shrink-0">
-               <div className="flex items-center justify-between">
-                 <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                   <Edit className="w-6 h-6" />
-                   {editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
-                 </DialogTitle>
+           <DialogContent className="max-w-6xl w-[95vw] h-[95vh] flex flex-col p-0">
+             <DialogHeader className="p-6 pb-4 border-b">
+               <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                 <Edit className="w-6 h-6" />
+                 {editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
+               </DialogTitle>
+               <DialogDescription className="sr-only">
+                 {editingBlog ? 'Edit your blog post content, settings, and preview' : 'Create a new blog post with content, settings, and preview'}
+               </DialogDescription>
+               <div className="flex items-center gap-2 mt-2">
                  {isAutoSaving && (
                    <Badge variant="secondary" className="animate-pulse">
                      <AlertCircle className="w-3 h-3 mr-1" />
@@ -456,181 +459,185 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                </div>
              </DialogHeader>
              
-             <ScrollArea className="flex-1 min-h-0">
-               <Tabs defaultValue="content" className="h-full">
-                 <TabsList className="grid w-full grid-cols-3 mb-4">
-                   <TabsTrigger value="content">Content</TabsTrigger>
-                   <TabsTrigger value="settings">Settings</TabsTrigger>
-                   <TabsTrigger value="preview">Preview</TabsTrigger>
-                 </TabsList>
+             <div className="flex-1 overflow-hidden">
+               <Tabs defaultValue="content" className="h-full flex flex-col">
+                 <div className="px-6 pt-4">
+                   <TabsList className="grid w-full grid-cols-3">
+                     <TabsTrigger value="content">Content</TabsTrigger>
+                     <TabsTrigger value="settings">Settings</TabsTrigger>
+                     <TabsTrigger value="preview">Preview</TabsTrigger>
+                   </TabsList>
+                 </div>
                  
-                 <TabsContent value="content" className="mt-0">
-                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                     {/* Main Content - Takes 2/3 of space */}
-                     <div className="lg:col-span-2 space-y-4">
-                       <div>
-                         <Label htmlFor="title" className="text-base font-semibold">Title *</Label>
-                         <Input
-                           id="title"
-                           value={formData.title}
-                           onChange={(e) => {
-                             setFormData({...formData, title: e.target.value});
-                             if (!formData.slug) {
-                               setFormData(prev => ({...prev, slug: generateSlug(e.target.value)}));
-                             }
-                           }}
-                           placeholder="Enter an engaging blog title..."
-                           className="text-lg mt-2"
-                         />
-                       </div>
-                       
-                       <div>
-                         <Label htmlFor="excerpt" className="text-base font-semibold">Excerpt</Label>
-                         <p className="text-sm text-muted-foreground mb-2">A brief summary that appears in blog listings</p>
-                         <Textarea
-                           id="excerpt"
-                           value={formData.excerpt}
-                           onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                           rows={3}
-                           placeholder="Write a compelling excerpt to attract readers..."
-                           className="resize-none"
-                         />
-                         <div className="text-xs text-muted-foreground mt-1">
-                           {formData.excerpt.length}/160 characters
-                         </div>
-                       </div>
-
-                       <div>
-                         <Label htmlFor="content" className="text-base font-semibold">Content</Label>
-                         <div className="mt-2">
-                           <EnhancedRichTextEditor
-                             value={formData.content}
-                             onChange={(content) => {
-                               setFormData({...formData, content});
-                               if (editingBlog) {
-                                 autoSave(content);
+                 <TabsContent value="content" className="flex-1 overflow-hidden mt-0 pt-4">
+                   <ScrollArea className="h-full px-6">
+                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
+                       {/* Main Content - Takes 2/3 of space */}
+                       <div className="lg:col-span-2 space-y-6">
+                         <div>
+                           <Label htmlFor="title" className="text-base font-semibold">Title *</Label>
+                           <Input
+                             id="title"
+                             value={formData.title}
+                             onChange={(e) => {
+                               setFormData({...formData, title: e.target.value});
+                               if (!formData.slug) {
+                                 setFormData(prev => ({...prev, slug: generateSlug(e.target.value)}));
                                }
                              }}
-                             placeholder="Start writing your amazing blog content..."
-                             showWordCount={true}
-                             showPreview={true}
-                             autoSave={!!editingBlog}
-                             height="400px"
+                             placeholder="Enter an engaging blog title..."
+                             className="text-lg mt-2"
                            />
                          </div>
+                         
+                         <div>
+                           <Label htmlFor="excerpt" className="text-base font-semibold">Excerpt</Label>
+                           <p className="text-sm text-muted-foreground mb-2">A brief summary that appears in blog listings</p>
+                           <Textarea
+                             id="excerpt"
+                             value={formData.excerpt}
+                             onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
+                             rows={3}
+                             placeholder="Write a compelling excerpt to attract readers..."
+                             className="resize-none"
+                           />
+                           <div className="text-xs text-muted-foreground mt-1">
+                             {formData.excerpt.length}/160 characters
+                           </div>
+                         </div>
+
+                         <div>
+                           <Label htmlFor="content" className="text-base font-semibold mb-2 block">Content</Label>
+                           <div className="border rounded-lg">
+                             <EnhancedRichTextEditor
+                               value={formData.content}
+                               onChange={(content) => {
+                                 setFormData({...formData, content});
+                                 if (editingBlog) {
+                                   autoSave(content);
+                                 }
+                               }}
+                               placeholder="Start writing your amazing blog content..."
+                               showWordCount={true}
+                               showPreview={true}
+                               autoSave={!!editingBlog}
+                               height="500px"
+                             />
+                           </div>
+                         </div>
+                       </div>
+
+                       {/* Sidebar - Takes 1/3 of space */}
+                       <div className="space-y-6">
+                         <Card className="p-4">
+                           <h3 className="font-semibold mb-4 flex items-center gap-2">
+                             <Calendar className="w-4 h-4" />
+                             Publication Settings
+                           </h3>
+                           <div className="space-y-4">
+                             <div>
+                               <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+                               <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                                 <SelectTrigger className="mt-1">
+                                   <SelectValue />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                   <SelectItem value="draft">
+                                     <div className="flex items-center gap-2">
+                                       <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                       Draft
+                                     </div>
+                                   </SelectItem>
+                                   <SelectItem value="published">
+                                     <div className="flex items-center gap-2">
+                                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                       Published
+                                     </div>
+                                   </SelectItem>
+                                   <SelectItem value="archived">
+                                     <div className="flex items-center gap-2">
+                                       <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                                       Archived
+                                     </div>
+                                   </SelectItem>
+                                 </SelectContent>
+                               </Select>
+                             </div>
+
+                             <div>
+                               <Label htmlFor="category" className="text-sm font-medium">Category</Label>
+                               <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                                 <SelectTrigger className="mt-1">
+                                   <SelectValue />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                   <SelectItem value="general">General</SelectItem>
+                                   <SelectItem value="technology">Technology</SelectItem>
+                                   <SelectItem value="ai">Artificial Intelligence</SelectItem>
+                                   <SelectItem value="business">Business</SelectItem>
+                                 </SelectContent>
+                               </Select>
+                             </div>
+
+                             <div className="flex items-center justify-between">
+                               <Label className="text-sm font-medium">Featured Article</Label>
+                               <Switch
+                                 checked={formData.featured}
+                                 onCheckedChange={(checked) => setFormData({...formData, featured: checked})}
+                               />
+                             </div>
+                           </div>
+                         </Card>
+
+                         <Card className="p-4">
+                           <h3 className="font-semibold mb-4">SEO & Metadata</h3>
+                           <div className="space-y-4">
+                             <div>
+                               <Label htmlFor="slug" className="text-sm font-medium">URL Slug</Label>
+                               <Input
+                                 id="slug"
+                                 value={formData.slug}
+                                 onChange={(e) => setFormData({...formData, slug: e.target.value})}
+                                 placeholder="url-friendly-slug"
+                                 className="mt-1 font-mono text-sm"
+                               />
+                               <p className="text-xs text-muted-foreground mt-1">
+                                 yoursite.com/blog/{formData.slug || 'your-slug'}
+                               </p>
+                             </div>
+
+                             <div>
+                               <Label htmlFor="featured_image" className="text-sm font-medium">Featured Image URL</Label>
+                               <Input
+                                 id="featured_image"
+                                 value={formData.featured_image_url}
+                                 onChange={(e) => setFormData({...formData, featured_image_url: e.target.value})}
+                                 placeholder="https://example.com/image.jpg"
+                                 className="mt-1"
+                               />
+                               {formData.featured_image_url && (
+                                 <div className="mt-2">
+                                   <img 
+                                     src={formData.featured_image_url} 
+                                     alt="Featured image preview" 
+                                     className="w-full h-20 object-cover rounded border"
+                                     onError={(e) => {
+                                       e.currentTarget.style.display = 'none';
+                                     }}
+                                   />
+                                 </div>
+                               )}
+                             </div>
+                           </div>
+                         </Card>
                        </div>
                      </div>
-
-                     {/* Sidebar - Takes 1/3 of space */}
-                     <div className="space-y-6">
-                       <Card className="p-4">
-                         <h3 className="font-semibold mb-4 flex items-center gap-2">
-                           <Calendar className="w-4 h-4" />
-                           Publication Settings
-                         </h3>
-                         <div className="space-y-4">
-                           <div>
-                             <Label htmlFor="status" className="text-sm font-medium">Status</Label>
-                             <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                               <SelectTrigger className="mt-1">
-                                 <SelectValue />
-                               </SelectTrigger>
-                               <SelectContent>
-                                 <SelectItem value="draft">
-                                   <div className="flex items-center gap-2">
-                                     <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                                     Draft
-                                   </div>
-                                 </SelectItem>
-                                 <SelectItem value="published">
-                                   <div className="flex items-center gap-2">
-                                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                     Published
-                                   </div>
-                                 </SelectItem>
-                                 <SelectItem value="archived">
-                                   <div className="flex items-center gap-2">
-                                     <div className="w-2 h-2 rounded-full bg-gray-500"></div>
-                                     Archived
-                                   </div>
-                                 </SelectItem>
-                               </SelectContent>
-                             </Select>
-                           </div>
-
-                           <div>
-                             <Label htmlFor="category" className="text-sm font-medium">Category</Label>
-                             <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                               <SelectTrigger className="mt-1">
-                                 <SelectValue />
-                               </SelectTrigger>
-                               <SelectContent>
-                                 <SelectItem value="general">General</SelectItem>
-                                 <SelectItem value="technology">Technology</SelectItem>
-                                 <SelectItem value="ai">Artificial Intelligence</SelectItem>
-                                 <SelectItem value="business">Business</SelectItem>
-                               </SelectContent>
-                             </Select>
-                           </div>
-
-                           <div className="flex items-center justify-between">
-                             <Label className="text-sm font-medium">Featured Article</Label>
-                             <Switch
-                               checked={formData.featured}
-                               onCheckedChange={(checked) => setFormData({...formData, featured: checked})}
-                             />
-                           </div>
-                         </div>
-                       </Card>
-
-                       <Card className="p-4">
-                         <h3 className="font-semibold mb-4">SEO & Metadata</h3>
-                         <div className="space-y-4">
-                           <div>
-                             <Label htmlFor="slug" className="text-sm font-medium">URL Slug</Label>
-                             <Input
-                               id="slug"
-                               value={formData.slug}
-                               onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                               placeholder="url-friendly-slug"
-                               className="mt-1 font-mono text-sm"
-                             />
-                             <p className="text-xs text-muted-foreground mt-1">
-                               yoursite.com/blog/{formData.slug || 'your-slug'}
-                             </p>
-                           </div>
-
-                           <div>
-                             <Label htmlFor="featured_image" className="text-sm font-medium">Featured Image URL</Label>
-                             <Input
-                               id="featured_image"
-                               value={formData.featured_image_url}
-                               onChange={(e) => setFormData({...formData, featured_image_url: e.target.value})}
-                               placeholder="https://example.com/image.jpg"
-                               className="mt-1"
-                             />
-                             {formData.featured_image_url && (
-                               <div className="mt-2">
-                                 <img 
-                                   src={formData.featured_image_url} 
-                                   alt="Featured image preview" 
-                                   className="w-full h-20 object-cover rounded border"
-                                   onError={(e) => {
-                                     e.currentTarget.style.display = 'none';
-                                   }}
-                                 />
-                               </div>
-                             )}
-                           </div>
-                         </div>
-                       </Card>
-                     </div>
-                   </div>
+                   </ScrollArea>
                  </TabsContent>
                  
-                 <TabsContent value="settings" className="mt-0">
-                   <ScrollArea className="h-[60vh]">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pr-4">
+                 <TabsContent value="settings" className="flex-1 overflow-hidden mt-0 pt-4">
+                   <ScrollArea className="h-full px-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
                        <Card className="p-6">
                          <h3 className="font-semibold mb-4 flex items-center gap-2">
                            <User className="w-4 h-4" />
@@ -667,9 +674,9 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                    </ScrollArea>
                  </TabsContent>
 
-                 <TabsContent value="preview" className="mt-0">
-                   <ScrollArea className="h-[60vh]">
-                     <div className="border rounded-lg p-6 bg-background mr-4">
+                 <TabsContent value="preview" className="flex-1 overflow-hidden mt-0 pt-4">
+                   <ScrollArea className="h-full px-6">
+                     <div className="border rounded-lg p-6 bg-background mb-6">
                        <div className="prose prose-sm max-w-none">
                          {formData.featured_image_url && (
                            <img 
@@ -686,7 +693,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                    </ScrollArea>
                  </TabsContent>
                </Tabs>
-             </ScrollArea>
+             </div>
 
             <div className="flex justify-between items-center pt-4 border-t">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
