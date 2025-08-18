@@ -193,122 +193,206 @@ const EnhancedRichTextEditor: React.FC<EnhancedRichTextEditorProps> = ({
       isFullscreen && "fixed inset-0 z-50 bg-background p-4",
       className
     )}>
-      <Card className="border-none shadow-lg">
-        {/* Header with actions */}
-        <div className="flex items-center justify-between p-3 border-b bg-muted/50">
-          <div className="flex items-center space-x-2">
-            <Zap className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">Enhanced Editor</span>
-            {autoSave && (
-              <Badge variant="secondary" className="text-xs">
-                Auto-save enabled
-              </Badge>
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            {showWordCount && (
-              <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-                <span>{wordCount} words</span>
-                <span>{charCount} characters</span>
+      <Card className="border border-muted shadow-lg overflow-hidden">
+        {/* Enhanced Header with gradient */}
+        <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold">Rich Text Editor</span>
+                  {autoSave && (
+                    <Badge variant="secondary" className="text-xs ml-2">
+                      Auto-save
+                    </Badge>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
             
-            <Separator orientation="vertical" className="h-4" />
-            
-            {showPreview && (
-              <Button
-                variant={isPreviewMode ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setIsPreviewMode(!isPreviewMode)}
-              >
-                {isPreviewMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-            >
-              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-            </Button>
-            
-            {onSave && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onSave(value)}
-              >
-                <Save className="w-4 h-4" />
-              </Button>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={exportAsHTML}
-            >
-              <Download className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center space-x-4">
+              {showWordCount && (
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground bg-background/50 px-3 py-1 rounded-lg">
+                  <div className="flex items-center space-x-1">
+                    <Type className="w-3 h-3" />
+                    <span className="font-medium">{wordCount}</span>
+                    <span className="text-xs">words</span>
+                  </div>
+                  <Separator orientation="vertical" className="h-4" />
+                  <div className="flex items-center space-x-1">
+                    <span className="font-medium">{charCount}</span>
+                    <span className="text-xs">chars</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-1">
+                {showPreview && (
+                  <Button
+                    variant={isPreviewMode ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setIsPreviewMode(!isPreviewMode)}
+                    className="h-8"
+                  >
+                    {isPreviewMode ? (
+                      <>
+                        <EyeOff className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Preview</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="h-8"
+                >
+                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                </Button>
+                
+                {onSave && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onSave(value)}
+                    className="h-8 text-primary hover:text-primary/80"
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={exportAsHTML}
+                  title="Export as HTML"
+                  className="h-8"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Quick Actions Bar */}
+        {/* Enhanced Quick Actions Bar */}
         {showToolbar && (
-          <div className="flex items-center space-x-1 p-2 border-b bg-background/50">
-            {quickActions.map((action, index) => (
-              <Button
-                key={index}
-                variant="ghost"
-                size="sm"
-                onClick={action.action}
-                title={action.label}
-                className="h-8 w-8 p-0"
-              >
-                <action.icon className="w-3.5 h-3.5" />
-              </Button>
-            ))}
-            
-            <Separator orientation="vertical" className="h-6 mx-2" />
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => quillRef.current?.getEditor().format('header', 1)}
-              className="h-8 px-2 text-xs"
-            >
-              H1
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => quillRef.current?.getEditor().format('header', 2)}
-              className="h-8 px-2 text-xs"
-            >
-              H2
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => quillRef.current?.getEditor().format('header', 3)}
-              className="h-8 px-2 text-xs"
-            >
-              H3
-            </Button>
+          <div className="bg-muted/30 border-b">
+            <div className="flex items-center justify-between p-3">
+              <div className="flex items-center space-x-1">
+                <span className="text-xs font-medium text-muted-foreground mr-3">Quick Actions:</span>
+                {quickActions.slice(0, 6).map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    size="sm"
+                    onClick={action.action}
+                    title={action.label}
+                    className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+                  >
+                    <action.icon className="w-3.5 h-3.5" />
+                  </Button>
+                ))}
+                
+                <Separator orientation="vertical" className="h-6 mx-2" />
+                
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3].map((level) => (
+                    <Button
+                      key={level}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => quillRef.current?.getEditor().format('header', level)}
+                      className="h-8 px-2 text-xs font-medium hover:bg-primary/10"
+                    >
+                      H{level}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => (quillRef.current?.getEditor() as any)?.history?.undo()}
+                  title="Undo (Ctrl+Z)"
+                  className="h-8 w-8 p-0"
+                >
+                  <Undo className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => (quillRef.current?.getEditor() as any)?.history?.redo()}
+                  title="Redo (Ctrl+Y)"
+                  className="h-8 w-8 p-0"
+                >
+                  <Redo className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Editor Content */}
-        <div className="relative">
+        {/* Editor Content with enhanced styling */}
+        <div className="relative bg-background">
           {isPreviewMode ? (
-            <div 
-              className="p-4 prose prose-sm max-w-none"
-              style={{ minHeight: height }}
-              dangerouslySetInnerHTML={{ __html: value }}
-            />
+            <div className="p-6">
+              <div className="max-w-none prose prose-sm dark:prose-invert">
+                <div 
+                  style={{ minHeight: height }}
+                  dangerouslySetInnerHTML={{ __html: value || '<p className="text-muted-foreground italic">Start writing to see preview...</p>' }}
+                />
+              </div>
+            </div>
           ) : (
-            <div style={editorStyle}>
+            <div style={editorStyle} className="overflow-hidden">
+              <style>{`
+                .ql-editor {
+                  padding: 1.5rem !important;
+                  font-size: 14px !important;
+                  line-height: 1.6 !important;
+                  color: hsl(var(--foreground)) !important;
+                }
+                .ql-editor.ql-blank::before {
+                  color: hsl(var(--muted-foreground)) !important;
+                  font-style: italic !important;
+                }
+                .ql-toolbar {
+                  border: none !important;
+                  border-bottom: 1px solid hsl(var(--border)) !important;
+                  background: hsl(var(--muted)/0.3) !important;
+                }
+                .ql-formats {
+                  margin-right: 15px !important;
+                }
+                .ql-picker-label {
+                  color: hsl(var(--foreground)) !important;
+                }
+                .ql-stroke {
+                  stroke: hsl(var(--foreground)) !important;
+                }
+                .ql-fill {
+                  fill: hsl(var(--foreground)) !important;
+                }
+                .ql-active .ql-stroke {
+                  stroke: hsl(var(--primary)) !important;
+                }
+                .ql-active .ql-fill {
+                  fill: hsl(var(--primary)) !important;
+                }
+              `}</style>
               <ReactQuill
                 ref={quillRef}
                 theme="snow"
@@ -317,31 +401,41 @@ const EnhancedRichTextEditor: React.FC<EnhancedRichTextEditorProps> = ({
                 modules={modules}
                 formats={formats}
                 placeholder={placeholder}
-                className="border-none"
-                style={{ height: '100%' }}
+                className="border-none h-full"
               />
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-3 border-t bg-muted/30 text-xs text-muted-foreground">
-          <div className="flex items-center space-x-4">
-            <span>Press Ctrl+S to save</span>
-            <span>Press Ctrl+Z to undo</span>
-            <span>Press Ctrl+Y to redo</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={exportAsText}
-              className="h-6 px-2 text-xs"
-            >
-              <FileText className="w-3 h-3 mr-1" />
-              Export TXT
-            </Button>
+        {/* Enhanced Footer */}
+        <div className="bg-muted/20 border-t">
+          <div className="flex items-center justify-between p-3">
+            <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Ready to write</span>
+              </div>
+              <Separator orientation="vertical" className="h-3" />
+              <span>Ctrl+S to save</span>
+              <span>•</span>
+              <span>Ctrl+Z/Y for undo/redo</span>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={exportAsText}
+                className="h-6 px-2 text-xs hover:bg-muted"
+              >
+                <FileText className="w-3 h-3 mr-1" />
+                Export TXT
+              </Button>
+              <Separator orientation="vertical" className="h-4" />
+              <div className="text-xs text-muted-foreground">
+                {isPreviewMode ? 'Preview Mode' : 'Edit Mode'}
+              </div>
+            </div>
           </div>
         </div>
       </Card>

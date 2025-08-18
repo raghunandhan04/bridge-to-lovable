@@ -6,9 +6,29 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EnhancedRichTextEditor from '@/components/ui/enhanced-rich-text-editor';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash, Eye, Upload } from 'lucide-react';
+import { 
+  Plus, 
+  Edit, 
+  Trash, 
+  Eye, 
+  Upload, 
+  Search, 
+  Filter, 
+  Calendar,
+  User,
+  BookOpen,
+  Star,
+  Globe,
+  FileText,
+  Save,
+  AlertCircle,
+  CheckCircle
+} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { migrateStaticBlogs } from '@/scripts/migrate-static-blogs';
 import { addFeaturedArticles } from '@/scripts/add-featured-articles';
@@ -32,9 +52,15 @@ interface BlogManagerProps {
 
 const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -68,6 +94,29 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     };
   }, []);
 
+  // Filter blogs based on search and filters
+  useEffect(() => {
+    let filtered = blogs;
+
+    if (searchTerm) {
+      filtered = filtered.filter(blog => 
+        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        blog.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(blog => blog.status === statusFilter);
+    }
+
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(blog => blog.category === categoryFilter);
+    }
+
+    setFilteredBlogs(filtered);
+  }, [blogs, searchTerm, statusFilter, categoryFilter]);
+
   const fetchBlogs = async () => {
     try {
       const { data, error } = await supabase
@@ -97,7 +146,37 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       .trim();
   };
 
+  // Auto-save function
+  const autoSave = async (content: string) => {
+    if (!editingBlog) return;
+    
+    setIsAutoSaving(true);
+    try {
+      const { error } = await supabase
+        .from('blogs')
+        .update({ content })
+        .eq('id', editingBlog.id);
+      
+      if (!error) {
+        setLastSaved(new Date());
+      }
+    } catch (error) {
+      console.log('Auto-save failed:', error);
+    } finally {
+      setIsAutoSaving(false);
+    }
+  };
+
   const handleSave = async () => {
+    if (!formData.title.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const blogData = {
         ...formData,
@@ -110,18 +189,25 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
           .update(blogData)
           .eq('id', editingBlog.id);
         if (error) throw error;
-        toast({ title: "Blog updated successfully!" });
+        toast({ 
+          title: "Success", 
+          description: "Blog updated successfully!" 
+        });
       } else {
         const { error } = await supabase
           .from('blogs')
           .insert([blogData]);
         if (error) throw error;
-        toast({ title: "Blog created successfully!" });
+        toast({ 
+          title: "Success", 
+          description: "Blog created successfully!" 
+        });
       }
 
       setEditingBlog(null);
       setShowCreateForm(false);
       resetForm();
+      setLastSaved(new Date());
     } catch (error: any) {
       toast({
         title: "Error",
@@ -222,28 +308,117 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     }
   };
 
-  if (loading) return <div>Loading blogs...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <span className="ml-2">Loading blogs...</span>
+    </div>
+  );
+
+  const statusCounts = {
+    all: blogs.length,
+    draft: blogs.filter(b => b.status === 'draft').length,
+    published: blogs.filter(b => b.status === 'published').length,
+    archived: blogs.filter(b => b.status === 'archived').length,
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Blog Management</h2>
-        <div className="flex space-x-2">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 rounded-lg border">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-foreground mb-2">Blog Management</h2>
+            <p className="text-muted-foreground">Create, edit, and manage your blog content</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <BookOpen className="w-3 h-3" />
+              {blogs.length} Total Posts
+            </Badge>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Globe className="w-3 h-3" />
+              {statusCounts.published} Published
+            </Badge>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <FileText className="w-3 h-3" />
+              {statusCounts.draft} Drafts
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions and Filters */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex-1 space-y-4">
+          {/* Search and Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search blogs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status ({statusCounts.all})</SelectItem>
+                <SelectItem value="published">Published ({statusCounts.published})</SelectItem>
+                <SelectItem value="draft">Draft ({statusCounts.draft})</SelectItem>
+                <SelectItem value="archived">Archived ({statusCounts.archived})</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="technology">Technology</SelectItem>
+                <SelectItem value="ai">Artificial Intelligence</SelectItem>
+                <SelectItem value="business">Business</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button 
+              onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('all');
+                setCategoryFilter('all');
+              }}
+              variant="outline"
+            >
+              Clear Filters
+            </Button>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-2">
           <Button 
             variant="outline" 
             onClick={handleMigrateBlogs}
             disabled={migrating}
           >
             <Upload className="w-4 h-4 mr-2" />
-            {migrating ? 'Migrating...' : 'Migrate Static Blogs'}
+            {migrating ? 'Migrating...' : 'Migrate Static'}
           </Button>
           <Button 
             variant="outline" 
             onClick={handleAddFeaturedArticles}
             disabled={addingFeatured}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            {addingFeatured ? 'Adding...' : 'Add Featured Articles'}
+            <Star className="w-4 h-4 mr-2" />
+            {addingFeatured ? 'Adding...' : 'Add Featured'}
           </Button>
           <Dialog open={showCreateForm || !!editingBlog} onOpenChange={(open) => {
           if (!open) {
@@ -253,112 +428,266 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
           }
           }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setShowCreateForm(true)}>
+              <Button onClick={() => setShowCreateForm(true)} className="bg-primary hover:bg-primary/90">
                 <Plus className="w-4 h-4 mr-2" />
-                New Blog
+                New Blog Post
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingBlog ? 'Edit Blog' : 'Create New Blog'}</DialogTitle>
+          <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+            <DialogHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Edit className="w-6 h-6" />
+                  {editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
+                </DialogTitle>
+                {isAutoSaving && (
+                  <Badge variant="secondary" className="animate-pulse">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Auto-saving...
+                  </Badge>
+                )}
+                {lastSaved && !isAutoSaving && (
+                  <Badge variant="outline" className="text-green-600">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Saved {lastSaved.toLocaleTimeString()}
+                  </Badge>
+                )}
+              </div>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="slug">Slug</Label>
-                  <Input
-                    id="slug"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                    placeholder="Auto-generated from title"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="excerpt">Excerpt</Label>
-                <Textarea
-                  id="excerpt"
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="content">Content</Label>
-                <EnhancedRichTextEditor
-                  value={formData.content}
-                  onChange={(content) => setFormData({...formData, content})}
-                  placeholder="Write your blog content here..."
-                  className="mt-2"
-                  showWordCount={true}
-                  showPreview={true}
-                  autoSave={false}
-                  height="500px"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="ai">Artificial Intelligence</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            
+            <div className="flex-1 overflow-hidden">
+              <Tabs defaultValue="content" className="h-full flex flex-col">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="content">Content</TabsTrigger>
+                  <TabsTrigger value="settings">Settings</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </TabsList>
                 
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <TabsContent value="content" className="flex-1 overflow-hidden mt-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                    {/* Main Content - Takes 2/3 of space */}
+                    <div className="lg:col-span-2 space-y-4">
+                      <div>
+                        <Label htmlFor="title" className="text-base font-semibold">Title *</Label>
+                        <Input
+                          id="title"
+                          value={formData.title}
+                          onChange={(e) => {
+                            setFormData({...formData, title: e.target.value});
+                            if (!formData.slug) {
+                              setFormData(prev => ({...prev, slug: generateSlug(e.target.value)}));
+                            }
+                          }}
+                          placeholder="Enter an engaging blog title..."
+                          className="text-lg mt-2"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="excerpt" className="text-base font-semibold">Excerpt</Label>
+                        <p className="text-sm text-muted-foreground mb-2">A brief summary that appears in blog listings</p>
+                        <Textarea
+                          id="excerpt"
+                          value={formData.excerpt}
+                          onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
+                          rows={3}
+                          placeholder="Write a compelling excerpt to attract readers..."
+                          className="resize-none"
+                        />
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {formData.excerpt.length}/160 characters
+                        </div>
+                      </div>
 
-                <div>
-                  <Label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.featured}
-                      onChange={(e) => setFormData({...formData, featured: e.target.checked})}
-                    />
-                    <span>Featured Article</span>
-                  </Label>
-                </div>
+                      <div>
+                        <Label htmlFor="content" className="text-base font-semibold">Content</Label>
+                        <EnhancedRichTextEditor
+                          value={formData.content}
+                          onChange={(content) => {
+                            setFormData({...formData, content});
+                            if (editingBlog) {
+                              autoSave(content);
+                            }
+                          }}
+                          placeholder="Start writing your amazing blog content..."
+                          className="mt-2"
+                          showWordCount={true}
+                          showPreview={true}
+                          autoSave={!!editingBlog}
+                          height="400px"
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  <Label htmlFor="featured_image">Featured Image URL</Label>
-                  <Input
-                    id="featured_image"
-                    value={formData.featured_image_url}
-                    onChange={(e) => setFormData({...formData, featured_image_url: e.target.value})}
-                  />
-                </div>
+                    {/* Sidebar - Takes 1/3 of space */}
+                    <div className="space-y-6">
+                      <Card className="p-4">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          Publication Settings
+                        </h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+                            <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="draft">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                    Draft
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="published">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                    Published
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="archived">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                                    Archived
+                                  </div>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="category" className="text-sm font-medium">Category</Label>
+                            <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="general">General</SelectItem>
+                                <SelectItem value="technology">Technology</SelectItem>
+                                <SelectItem value="ai">Artificial Intelligence</SelectItem>
+                                <SelectItem value="business">Business</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">Featured Article</Label>
+                            <Switch
+                              checked={formData.featured}
+                              onCheckedChange={(checked) => setFormData({...formData, featured: checked})}
+                            />
+                          </div>
+                        </div>
+                      </Card>
+
+                      <Card className="p-4">
+                        <h3 className="font-semibold mb-4">SEO & Metadata</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="slug" className="text-sm font-medium">URL Slug</Label>
+                            <Input
+                              id="slug"
+                              value={formData.slug}
+                              onChange={(e) => setFormData({...formData, slug: e.target.value})}
+                              placeholder="url-friendly-slug"
+                              className="mt-1 font-mono text-sm"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              yoursite.com/blog/{formData.slug || 'your-slug'}
+                            </p>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="featured_image" className="text-sm font-medium">Featured Image URL</Label>
+                            <Input
+                              id="featured_image"
+                              value={formData.featured_image_url}
+                              onChange={(e) => setFormData({...formData, featured_image_url: e.target.value})}
+                              placeholder="https://example.com/image.jpg"
+                              className="mt-1"
+                            />
+                            {formData.featured_image_url && (
+                              <div className="mt-2">
+                                <img 
+                                  src={formData.featured_image_url} 
+                                  alt="Featured image preview" 
+                                  className="w-full h-20 object-cover rounded border"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="settings" className="mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="p-6">
+                      <h3 className="font-semibold mb-4 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Author Settings
+                      </h3>
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-sm font-medium">Author</Label>
+                          <p className="text-sm text-muted-foreground mt-1">Currently logged in as: {userRole}</p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="p-6">
+                      <h3 className="font-semibold mb-4">Advanced Options</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-sm font-medium">Comments Enabled</Label>
+                            <p className="text-xs text-muted-foreground">Allow readers to comment</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-sm font-medium">Social Sharing</Label>
+                            <p className="text-xs text-muted-foreground">Enable social share buttons</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="preview" className="mt-4">
+                  <div className="border rounded-lg p-6 bg-background max-h-[60vh] overflow-y-auto">
+                    <div className="prose prose-sm max-w-none">
+                      {formData.featured_image_url && (
+                        <img 
+                          src={formData.featured_image_url} 
+                          alt={formData.title} 
+                          className="w-full h-48 object-cover rounded mb-6"
+                        />
+                      )}
+                      <h1 className="text-3xl font-bold mb-2">{formData.title || 'Blog Title'}</h1>
+                      <p className="text-muted-foreground mb-6">{formData.excerpt || 'Blog excerpt will appear here...'}</p>
+                      <div dangerouslySetInnerHTML={{ __html: formData.content || '<p>Blog content will appear here...</p>' }} />
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <div className="flex justify-between items-center pt-4 border-t">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                {editingBlog ? 'Editing existing post' : 'Creating new post'}
               </div>
-
-              <div className="flex justify-end space-x-2">
+              <div className="flex gap-2">
                 <Button 
                   variant="outline" 
                   onClick={() => {
@@ -369,8 +698,13 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleSave}>
-                  {editingBlog ? 'Update' : 'Create'} Blog
+                <Button 
+                  onClick={handleSave}
+                  className="bg-primary hover:bg-primary/90"
+                  disabled={!formData.title.trim()}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {editingBlog ? 'Update Post' : 'Create Post'}
                 </Button>
               </div>
             </div>
@@ -379,67 +713,109 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         </div>
       </div>
 
-      <div className="grid gap-4">
-        {blogs.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground">No blogs found. Create your first blog post!</p>
+      {/* Blog List */}
+      <div className="space-y-4">
+        {filteredBlogs.length === 0 ? (
+          <Card className="p-12 text-center border-dashed">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                <BookOpen className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">No blogs found</h3>
+                <p className="text-muted-foreground">
+                  {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' 
+                    ? 'Try adjusting your filters to see more results.' 
+                    : 'Create your first blog post to get started!'
+                  }
+                </p>
+              </div>
+              {!searchTerm && statusFilter === 'all' && categoryFilter === 'all' && (
+                <Button onClick={() => setShowCreateForm(true)} className="mt-4">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Blog Post
+                </Button>
+              )}
+            </div>
           </Card>
         ) : (
-          blogs.map((blog) => (
-            <Card key={blog.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{blog.title}</CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <span className="font-medium capitalize">{blog.category}</span>
-                      <span>•</span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        blog.status === 'published' ? 'bg-green-100 text-green-800' :
-                        blog.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {blog.status}
-                      </span>
-                      <span>•</span>
-                      <span>{new Date(blog.created_at).toLocaleDateString()}</span>
-                      {blog.featured && (
-                        <>
-                          <span>•</span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Featured</span>
-                        </>
+          <div className="grid gap-4">
+            {filteredBlogs.map((blog) => (
+              <Card key={blog.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/20 hover:border-l-primary">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CardTitle className="text-xl font-bold truncate">{blog.title}</CardTitle>
+                        {blog.featured && (
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        <Badge 
+                          variant={blog.status === 'published' ? 'default' : blog.status === 'draft' ? 'secondary' : 'outline'}
+                          className="capitalize"
+                        >
+                          {blog.status}
+                        </Badge>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(blog.created_at).toLocaleDateString()}
+                        </span>
+                        <span className="capitalize font-medium">{blog.category}</span>
+                        <span className="font-mono text-xs bg-muted px-2 py-1 rounded">/{blog.slug}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleEdit(blog)}
+                        className="hover:bg-primary/10"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleDelete(blog.id)}
+                        className="hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                {(blog.excerpt || blog.featured_image_url) && (
+                  <CardContent className="pt-0">
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        {blog.excerpt && (
+                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                            {blog.excerpt}
+                          </p>
+                        )}
+                      </div>
+                      {blog.featured_image_url && (
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={blog.featured_image_url} 
+                            alt={blog.title} 
+                            className="w-20 h-20 object-cover rounded-lg border shadow-sm"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground font-mono mt-1">Slug: /{blog.slug}</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(blog)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="destructive" 
-                      onClick={() => handleDelete(blog.id)}
-                    >
-                      <Trash className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-2">{blog.excerpt}</p>
-                {blog.featured_image_url && (
-                  <div className="mt-3">
-                    <img 
-                      src={blog.featured_image_url} 
-                      alt={blog.title} 
-                      className="w-20 h-20 object-cover rounded border"
-                    />
-                  </div>
+                  </CardContent>
                 )}
-              </CardContent>
-            </Card>
-          ))
+              </Card>
+            ))}
+          </div>
         )}
       </div>
     </div>
