@@ -84,49 +84,69 @@ const LiveWebsitePreview = () => {
   const attachEditListeners = () => {
     if (!previewRef.current) return;
 
-    const editableElements = previewRef.current.querySelectorAll('[data-section-id]');
-    
-    editableElements.forEach((element) => {
+    // First, handle existing sections with data-section-id
+    const existingSections = previewRef.current.querySelectorAll('[data-section-id]');
+    existingSections.forEach((element) => {
       const htmlElement = element as HTMLElement;
-      htmlElement.style.cursor = 'pointer';
-      htmlElement.style.outline = '2px dashed transparent';
-      htmlElement.style.transition = 'outline-color 0.2s ease';
-      
-      const handleClick = (e: Event) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handleElementClick(htmlElement);
-      };
-
-      const handleMouseEnter = () => {
-        htmlElement.style.outlineColor = 'hsl(var(--primary))';
-        htmlElement.style.backgroundColor = 'hsl(var(--primary) / 0.1)';
-      };
-
-      const handleMouseLeave = () => {
-        htmlElement.style.outlineColor = 'transparent';
-        htmlElement.style.backgroundColor = 'transparent';
-      };
-
-      htmlElement.addEventListener('click', handleClick);
-      htmlElement.addEventListener('mouseenter', handleMouseEnter);
-      htmlElement.addEventListener('mouseleave', handleMouseLeave);
-      
-      // Store event listeners for cleanup
-      (htmlElement as any)._editListeners = {
-        click: handleClick,
-        mouseenter: handleMouseEnter,
-        mouseleave: handleMouseLeave
-      };
+      attachElementListener(htmlElement);
     });
+
+    // Then, add data attributes to common editable elements that don't have them
+    const textElements = previewRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6, p:not([data-section-id])');
+    textElements.forEach((element, index) => {
+      const htmlElement = element as HTMLElement;
+      
+      // Skip if already has data attributes or is inside a section that has them
+      if (htmlElement.closest('[data-section-id]')) return;
+      
+      // Add temporary data attributes for editing
+      htmlElement.setAttribute('data-temp-edit', 'true');
+      htmlElement.setAttribute('data-temp-id', `temp-${index}`);
+      htmlElement.setAttribute('data-field', htmlElement.tagName.toLowerCase().startsWith('h') ? 'title' : 'content');
+      
+      attachElementListener(htmlElement);
+    });
+  };
+
+  const attachElementListener = (htmlElement: HTMLElement) => {
+    htmlElement.style.cursor = 'pointer';
+    htmlElement.style.outline = '2px dashed transparent';
+    htmlElement.style.transition = 'outline-color 0.2s ease';
+    
+    const handleClick = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleElementClick(htmlElement);
+    };
+
+    const handleMouseEnter = () => {
+      htmlElement.style.outlineColor = 'hsl(var(--primary))';
+      htmlElement.style.backgroundColor = 'hsl(var(--primary) / 0.1)';
+    };
+
+    const handleMouseLeave = () => {
+      htmlElement.style.outlineColor = 'transparent';
+      htmlElement.style.backgroundColor = 'transparent';
+    };
+
+    htmlElement.addEventListener('click', handleClick);
+    htmlElement.addEventListener('mouseenter', handleMouseEnter);
+    htmlElement.addEventListener('mouseleave', handleMouseLeave);
+    
+    // Store event listeners for cleanup
+    (htmlElement as any)._editListeners = {
+      click: handleClick,
+      mouseenter: handleMouseEnter,
+      mouseleave: handleMouseLeave
+    };
   };
 
   const removeEditListeners = () => {
     if (!previewRef.current) return;
 
-    const editableElements = previewRef.current.querySelectorAll('[data-section-id]');
+    const allEditableElements = previewRef.current.querySelectorAll('[data-section-id], [data-temp-edit]');
     
-    editableElements.forEach((element) => {
+    allEditableElements.forEach((element) => {
       const htmlElement = element as HTMLElement;
       const listeners = (htmlElement as any)._editListeners;
       
@@ -140,32 +160,51 @@ const LiveWebsitePreview = () => {
       htmlElement.style.cursor = '';
       htmlElement.style.outline = '';
       htmlElement.style.backgroundColor = '';
+      
+      // Remove temporary attributes
+      if (htmlElement.hasAttribute('data-temp-edit')) {
+        htmlElement.removeAttribute('data-temp-edit');
+        htmlElement.removeAttribute('data-temp-id');
+        htmlElement.removeAttribute('data-field');
+      }
     });
   };
 
   const handleElementClick = (element: HTMLElement) => {
     const sectionId = element.getAttribute('data-section-id');
+    const tempId = element.getAttribute('data-temp-id');
     const field = element.getAttribute('data-field') || 'content';
     
-    if (!sectionId) return;
-
-    const section = sections.find(s => s.id === sectionId);
-    if (!section) return;
-
     let value = '';
-    if (field === 'title') {
-      value = section.title;
-    } else if (field === 'content') {
-      value = section.content;
-    } else if (field.startsWith('data.')) {
-      const dataKey = field.replace('data.', '');
-      value = section.data?.[dataKey] || '';
+    let actualSectionId = sectionId;
+
+    if (sectionId) {
+      // Existing section
+      const section = sections.find(s => s.id === sectionId);
+      if (!section) return;
+
+      if (field === 'title') {
+        value = section.title;
+      } else if (field === 'content') {
+        value = section.content;
+      } else if (field.startsWith('data.')) {
+        const dataKey = field.replace('data.', '');
+        value = section.data?.[dataKey] || '';
+      }
+    } else if (tempId) {
+      // Temporary element - get current text content
+      value = element.textContent || '';
+      
+      // For temporary elements, we'll create a new section if saved
+      actualSectionId = tempId;
     }
+
+    if (!value && !tempId) return;
 
     // Check if content is long enough to warrant a textarea
     const shouldUseTextarea = value.length > 100 || value.includes('\n') || field === 'content';
 
-    setEditingElement({ sectionId, field, value, element });
+    setEditingElement({ sectionId: actualSectionId, field, value, element });
     setEditValue(value);
     setIsTextarea(shouldUseTextarea);
   };
@@ -174,6 +213,24 @@ const LiveWebsitePreview = () => {
     if (!editingElement) return;
 
     try {
+      // Check if this is a temporary element (static content)
+      if (editingElement.sectionId.startsWith('temp-')) {
+        // For static content, just update the text in place without creating new sections
+        const textElement = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
+        if (textElement) {
+          textElement.textContent = editValue;
+        }
+
+        toast({
+          title: "Content Updated",
+          description: "Static content updated in place. Note: This change is temporary and will reset on page reload.",
+        });
+
+        setEditingElement(null);
+        return;
+      }
+
+      // Update existing CMS section
       const section = sections.find(s => s.id === editingElement.sectionId);
       if (!section) return;
 
@@ -199,8 +256,8 @@ const LiveWebsitePreview = () => {
       if (error) throw error;
 
       toast({
-        title: "Content Updated",
-        description: "Changes saved successfully and will appear instantly.",
+        title: "CMS Content Updated",
+        description: "Changes saved successfully to the database.",
       });
 
       // Update the element text immediately for instant feedback
