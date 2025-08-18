@@ -34,6 +34,29 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Apply static content overrides when sections load
+  useEffect(() => {
+    const overrides = sections.filter(section => section.section_type === 'static_override');
+    if (overrides.length > 0) {
+      setTimeout(() => {
+        overrides.forEach(override => {
+          if (override.data?.element_path && override.data?.override_text) {
+            try {
+              const elements = document.querySelectorAll(override.data.element_path);
+              elements.forEach(element => {
+                if (element.textContent?.trim() === override.data.original_text?.trim()) {
+                  element.textContent = override.data.override_text;
+                }
+              });
+            } catch (error) {
+              console.warn('Could not apply override:', error);
+            }
+          }
+        });
+      }, 100);
+    }
+  }, [sections]);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

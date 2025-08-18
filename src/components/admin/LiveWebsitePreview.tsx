@@ -213,7 +213,7 @@ const LiveWebsitePreview = () => {
     if (!editingElement) return;
 
     try {
-      // For all content (static or CMS), just update the text in place permanently
+      // Update the element immediately in the preview
       const elementToUpdate = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
       if (elementToUpdate) {
         elementToUpdate.textContent = editValue;
@@ -246,15 +246,43 @@ const LiveWebsitePreview = () => {
           
           toast({
             title: "CMS Content Updated",
-            description: "Changes saved successfully to the database.",
+            description: "Changes saved successfully and reflected on website.",
           });
           refetch(); // Refresh data
         }
       } else {
+        // For static content, create a content section that acts as an override
+        const elementPath = getElementPath(editingElement.element);
+        const newSection = {
+          section_key: `static_override_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          title: editingElement.field === 'title' ? editValue : editingElement.element.textContent || '',
+          content: editingElement.field === 'content' ? editValue : '',
+          page_path: currentPage,
+          section_type: 'static_override',
+          display_order: 999,
+          visible: true,
+          data: {
+            element_path: elementPath,
+            original_text: editingElement.value,
+            override_text: editValue,
+            element_type: editingElement.element.tagName.toLowerCase(),
+            field_type: editingElement.field
+          }
+        };
+
+        const { error } = await supabase
+          .from('content_sections')
+          .insert(newSection);
+
+        if (error) throw error;
+        
         toast({
           title: "Content Updated",
-          description: "Your changes have been saved in place.",
+          description: "Changes saved permanently and will be reflected on the website.",
         });
+
+        // Refresh the sections data
+        refetch();
       }
 
       setEditingElement(null);
@@ -267,6 +295,35 @@ const LiveWebsitePreview = () => {
       });
     }
   };
+
+  const getElementPath = (element: HTMLElement): string => {
+    const path: string[] = [];
+    let current = element;
+    
+    while (current && current !== document.body) {
+      let selector = current.tagName.toLowerCase();
+      
+      // Add class if available
+      if (current.className) {
+        selector += '.' + current.className.split(' ').join('.');
+      }
+      
+      // Add position among siblings with same tag
+      const siblings = Array.from(current.parentElement?.children || [])
+        .filter(sibling => sibling.tagName === current.tagName);
+      
+      if (siblings.length > 1) {
+        const index = siblings.indexOf(current);
+        selector += `:nth-of-type(${index + 1})`;
+      }
+      
+      path.unshift(selector);
+      current = current.parentElement as HTMLElement;
+    }
+    
+    return path.join(' > ');
+  };
+
 
   const getCurrentPageComponent = () => {
     const page = pages.find(p => p.path === currentPage);
