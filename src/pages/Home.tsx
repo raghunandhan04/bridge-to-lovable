@@ -81,12 +81,17 @@ const Home = () => {
         </Button>
       )}
 
-      {/* Force Original Content - Dynamic Sections Disabled */}
-      {false ? (
-        sections.map((section) => (
-          <DynamicSection key={section.id} section={section} isAdmin={isAdminMode} />
-        ))
-      ) : (
+      {/* Dynamic Content Sections */}
+      {!loading && sections.length > 0 && (
+        <div className="space-y-16">
+          {sections.map((section) => (
+            <DynamicSection key={section.id} section={section} isAdmin={isAdminMode} />
+          ))}
+        </div>
+      )}
+
+      {/* Original Static Content */}
+      <div className="space-y-16">
         <>
           {/* Fallback Hero Section */}
           <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background overflow-hidden">
@@ -184,7 +189,7 @@ const Home = () => {
             </div>
           </section>
         </>
-      )}
+      </div>
 
       {/* Back to Top Button */}
       {showBackToTop && (

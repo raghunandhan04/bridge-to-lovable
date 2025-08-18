@@ -215,18 +215,53 @@ const LiveWebsitePreview = () => {
     try {
       // Check if this is a temporary element (static content)
       if (editingElement.sectionId.startsWith('temp-')) {
-        // For static content, just update the text in place without creating new sections
-        const textElement = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
+        // Create a new CMS section for static content to make it permanent
+        const element = editingElement.element;
+        const tagName = element.tagName.toLowerCase();
+        const isHeading = tagName.startsWith('h');
+        
+        // Get the position and context for this new section
+        const allElements = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6, p'));
+        const elementIndex = allElements.indexOf(element);
+        
+        const newSection = {
+          section_key: `edited-content-${Date.now()}`,
+          title: isHeading ? editValue : '',
+          content: isHeading ? '' : editValue,
+          image_url: '',
+          data: {},
+          section_type: 'text',
+          page_path: currentPage,
+          display_order: (elementIndex + 1) * 10, // Give it a reasonable order
+          visible: true
+        };
+
+        const { data, error } = await supabase
+          .from('content_sections')
+          .insert([newSection])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Update the element with the new section ID and remove temp attributes
+        element.setAttribute('data-section-id', data.id);
+        element.removeAttribute('data-temp-edit');
+        element.removeAttribute('data-temp-id');
+        
+        // Update the element text immediately
+        const textElement = element.querySelector('[data-editable-text]') || element;
         if (textElement) {
           textElement.textContent = editValue;
         }
 
         toast({
-          title: "Content Updated",
-          description: "Static content updated in place. Note: This change is temporary and will reset on page reload.",
+          title: "Content Saved Permanently",
+          description: "Your edit has been saved as a new CMS section and will persist.",
         });
 
         setEditingElement(null);
+        refetch(); // Refresh data
         return;
       }
 
