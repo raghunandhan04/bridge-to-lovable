@@ -81,8 +81,8 @@ const Home = () => {
         </Button>
       )}
 
-      {/* Dynamic Content Sections */}
-      {!loading && sections.length > 0 ? (
+      {/* Force Original Content - Dynamic Sections Disabled */}
+      {false ? (
         sections.map((section) => (
           <DynamicSection key={section.id} section={section} isAdmin={isAdminMode} />
         ))
