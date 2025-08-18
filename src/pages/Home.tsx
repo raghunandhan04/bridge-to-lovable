@@ -34,28 +34,31 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Apply static content overrides when sections load
+  // Apply localStorage overrides when component mounts
   useEffect(() => {
-    const overrides = sections.filter(section => section.data?.is_static_override === true);
-    if (overrides.length > 0) {
-      setTimeout(() => {
-        overrides.forEach(override => {
-          if (override.data?.element_path && override.data?.override_text) {
-            try {
-              const elements = document.querySelectorAll(override.data.element_path);
+    const applyStoredOverrides = () => {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith(`content_override_${window.location.pathname}_`)) {
+          try {
+            const override = JSON.parse(localStorage.getItem(key) || '{}');
+            if (override.element_path && override.override_text) {
+              const elements = document.querySelectorAll(override.element_path);
               elements.forEach(element => {
-                if (element.textContent?.trim() === override.data.original_text?.trim()) {
-                  element.textContent = override.data.override_text;
+                if (element.textContent?.trim() === override.original_text?.trim()) {
+                  element.textContent = override.override_text;
                 }
               });
-            } catch (error) {
-              console.warn('Could not apply override:', error);
             }
+          } catch (error) {
+            console.warn('Could not apply stored override:', error);
           }
-        });
-      }, 100);
-    }
-  }, [sections]);
+        }
+      });
+    };
+
+    // Apply overrides after DOM is ready
+    setTimeout(applyStoredOverrides, 100);
+  }, []);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });

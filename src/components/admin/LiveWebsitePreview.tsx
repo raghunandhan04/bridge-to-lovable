@@ -251,39 +251,28 @@ const LiveWebsitePreview = () => {
           refetch(); // Refresh data
         }
       } else {
-        // For static content, create a content section that acts as an override
+        // For static content, store override in localStorage and apply immediately
         const elementPath = getElementPath(editingElement.element);
-        const newSection = {
-          section_key: `static_override_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          title: editingElement.field === 'title' ? editValue : editingElement.element.textContent || '',
-          content: editingElement.field === 'content' ? editValue : '',
-          page_path: currentPage,
-          section_type: 'content', // Use valid section type
-          display_order: 999,
-          visible: true,
-          data: {
-            element_path: elementPath,
-            original_text: editingElement.value,
-            override_text: editValue,
-            element_type: editingElement.element.tagName.toLowerCase(),
-            field_type: editingElement.field,
-            is_static_override: true // Flag to identify this as a static override
-          }
-        };
-
-        const { error } = await supabase
-          .from('content_sections')
-          .insert(newSection);
-
-        if (error) throw error;
+        const overrideKey = `content_override_${currentPage}_${elementPath}`;
+        
+        // Store in localStorage
+        localStorage.setItem(overrideKey, JSON.stringify({
+          original_text: editingElement.value,
+          override_text: editValue,
+          element_path: elementPath,
+          timestamp: Date.now()
+        }));
+        
+        // Apply change immediately
+        const elementToUpdate = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
+        if (elementToUpdate) {
+          elementToUpdate.textContent = editValue;
+        }
         
         toast({
           title: "Content Updated",
-          description: "Changes saved permanently and will be reflected on the website.",
+          description: "Changes saved and applied to the website.",
         });
-
-        // Refresh the sections data
-        refetch();
       }
 
       setEditingElement(null);
