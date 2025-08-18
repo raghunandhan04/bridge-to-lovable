@@ -81,16 +81,7 @@ const Home = () => {
         </Button>
       )}
 
-      {/* Dynamic Content Sections */}
-      {!loading && sections.length > 0 && (
-        <div className="space-y-16">
-          {sections.map((section) => (
-            <DynamicSection key={section.id} section={section} isAdmin={isAdminMode} />
-          ))}
-        </div>
-      )}
-
-      {/* Original Static Content */}
+      {/* Original Static Content with seamless CMS integration */}
       <div className="space-y-16">
         <>
           {/* Fallback Hero Section */}

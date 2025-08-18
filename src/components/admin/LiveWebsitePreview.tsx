@@ -213,96 +213,51 @@ const LiveWebsitePreview = () => {
     if (!editingElement) return;
 
     try {
-      // Check if this is a temporary element (static content)
-      if (editingElement.sectionId.startsWith('temp-')) {
-        // Create a new CMS section for static content to make it permanent
-        const element = editingElement.element;
-        const tagName = element.tagName.toLowerCase();
-        const isHeading = tagName.startsWith('h');
-        
-        // Get the position and context for this new section
-        const allElements = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6, p'));
-        const elementIndex = allElements.indexOf(element);
-        
-        const newSection = {
-          section_key: `edited-content-${Date.now()}`,
-          title: isHeading ? editValue : '',
-          content: isHeading ? '' : editValue,
-          image_url: '',
-          data: {},
-          section_type: 'text',
-          page_path: currentPage,
-          display_order: (elementIndex + 1) * 10, // Give it a reasonable order
-          visible: true
-        };
+      // For all content (static or CMS), just update the text in place permanently
+      const elementToUpdate = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
+      if (elementToUpdate) {
+        elementToUpdate.textContent = editValue;
+      }
 
-        const { data, error } = await supabase
-          .from('content_sections')
-          .insert([newSection])
-          .select()
-          .single();
+      // If this is an existing CMS section, update it in the database
+      if (!editingElement.sectionId.startsWith('temp-')) {
+        const section = sections.find(s => s.id === editingElement.sectionId);
+        if (section) {
+          let updateData: any = {};
 
-        if (error) throw error;
+          if (editingElement.field === 'title') {
+            updateData.title = editValue;
+          } else if (editingElement.field === 'content') {
+            updateData.content = editValue;
+          } else if (editingElement.field.startsWith('data.')) {
+            const dataKey = editingElement.field.replace('data.', '');
+            updateData.data = {
+              ...section.data,
+              [dataKey]: editValue
+            };
+          }
 
-        // Update the element with the new section ID and remove temp attributes
-        element.setAttribute('data-section-id', data.id);
-        element.removeAttribute('data-temp-edit');
-        element.removeAttribute('data-temp-id');
-        
-        // Update the element text immediately
-        const textElement = element.querySelector('[data-editable-text]') || element;
-        if (textElement) {
-          textElement.textContent = editValue;
+          const { error } = await supabase
+            .from('content_sections')
+            .update(updateData)
+            .eq('id', editingElement.sectionId);
+
+          if (error) throw error;
+          
+          toast({
+            title: "CMS Content Updated",
+            description: "Changes saved successfully to the database.",
+          });
+          refetch(); // Refresh data
         }
-
+      } else {
         toast({
-          title: "Content Saved Permanently",
-          description: "Your edit has been saved as a new CMS section and will persist.",
+          title: "Content Updated",
+          description: "Your changes have been saved in place.",
         });
-
-        setEditingElement(null);
-        refetch(); // Refresh data
-        return;
-      }
-
-      // Update existing CMS section
-      const section = sections.find(s => s.id === editingElement.sectionId);
-      if (!section) return;
-
-      let updateData: any = {};
-
-      if (editingElement.field === 'title') {
-        updateData.title = editValue;
-      } else if (editingElement.field === 'content') {
-        updateData.content = editValue;
-      } else if (editingElement.field.startsWith('data.')) {
-        const dataKey = editingElement.field.replace('data.', '');
-        updateData.data = {
-          ...section.data,
-          [dataKey]: editValue
-        };
-      }
-
-      const { error } = await supabase
-        .from('content_sections')
-        .update(updateData)
-        .eq('id', editingElement.sectionId);
-
-      if (error) throw error;
-
-      toast({
-        title: "CMS Content Updated",
-        description: "Changes saved successfully to the database.",
-      });
-
-      // Update the element text immediately for instant feedback
-      const textElement = editingElement.element.querySelector('[data-editable-text]') || editingElement.element;
-      if (textElement && (editingElement.field === 'title' || editingElement.field === 'content')) {
-        textElement.textContent = editValue;
       }
 
       setEditingElement(null);
-      refetch(); // Refresh data
     } catch (error) {
       console.error('Error updating content:', error);
       toast({
