@@ -258,7 +258,7 @@ const LiveWebsitePreview = () => {
           title: editingElement.field === 'title' ? editValue : editingElement.element.textContent || '',
           content: editingElement.field === 'content' ? editValue : '',
           page_path: currentPage,
-          section_type: 'static_override',
+          section_type: 'content', // Use valid section type
           display_order: 999,
           visible: true,
           data: {
@@ -266,7 +266,8 @@ const LiveWebsitePreview = () => {
             original_text: editingElement.value,
             override_text: editValue,
             element_type: editingElement.element.tagName.toLowerCase(),
-            field_type: editingElement.field
+            field_type: editingElement.field,
+            is_static_override: true // Flag to identify this as a static override
           }
         };
 

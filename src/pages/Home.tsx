@@ -36,7 +36,7 @@ const Home = () => {
 
   // Apply static content overrides when sections load
   useEffect(() => {
-    const overrides = sections.filter(section => section.section_type === 'static_override');
+    const overrides = sections.filter(section => section.data?.is_static_override === true);
     if (overrides.length > 0) {
       setTimeout(() => {
         overrides.forEach(override => {
