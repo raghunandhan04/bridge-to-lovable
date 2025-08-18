@@ -70,22 +70,30 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
                     onChange={(e) => setEditTitle(e.target.value)}
                     className="text-5xl md:text-7xl font-bold leading-tight text-gradient bg-transparent border-2 border-dashed border-primary/50 p-2 w-full"
                   />
-                ) : (
-                  <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-                    <span className="text-gradient">{section.title}</span>
-                  </h1>
-                )}
+                 ) : (
+                   <h1 
+                     className="text-5xl md:text-7xl font-bold leading-tight"
+                     data-section-id={section.id}
+                     data-field="title"
+                   >
+                     <span className="text-gradient" data-editable-text>{section.title}</span>
+                   </h1>
+                 )}
                 {isEditing ? (
                   <textarea 
                     value={editContent} 
                     onChange={(e) => setEditContent(e.target.value)}
                     className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed bg-transparent border-2 border-dashed border-primary/50 p-2 w-full h-32"
                   />
-                ) : (
-                  <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                    {section.content}
-                  </p>
-                )}
+                 ) : (
+                   <p 
+                     className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+                     data-section-id={section.id}
+                     data-field="content"
+                   >
+                     <span data-editable-text>{section.content}</span>
+                   </p>
+                 )}
                 {section.data?.buttons && (
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     {section.data.buttons.map((button: any, index: number) => (
@@ -122,8 +130,20 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
           <section className={`py-20 bg-muted/30 ${className}`}>
             <div className="container mx-auto px-4 lg:px-8">
               <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-bold text-hero mb-4">{section.title}</h2>
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{section.content}</p>
+                <h2 
+                  className="text-4xl md:text-5xl font-bold text-hero mb-4"
+                  data-section-id={section.id}
+                  data-field="title"
+                >
+                  <span data-editable-text>{section.title}</span>
+                </h2>
+                <p 
+                  className="text-xl text-muted-foreground max-w-2xl mx-auto"
+                  data-section-id={section.id}
+                  data-field="content"
+                >
+                  <span data-editable-text>{section.content}</span>
+                </p>
               </div>
               {section.image_url && (
                 <div className="flex justify-center mb-8">
@@ -174,8 +194,20 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
           <section className={`py-20 bg-background ${className}`}>
             <div className="container mx-auto px-4 lg:px-8 text-center">
               <div className="max-w-3xl mx-auto space-y-8">
-                <h2 className="text-4xl md:text-5xl font-bold text-hero">{section.title}</h2>
-                <p className="text-xl text-muted-foreground">{section.content}</p>
+                <h2 
+                  className="text-4xl md:text-5xl font-bold text-hero"
+                  data-section-id={section.id}
+                  data-field="title"
+                >
+                  <span data-editable-text>{section.title}</span>
+                </h2>
+                <p 
+                  className="text-xl text-muted-foreground"
+                  data-section-id={section.id}
+                  data-field="content"
+                >
+                  <span data-editable-text>{section.content}</span>
+                </p>
                 {section.data?.buttons && (
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     {section.data.buttons.map((button: any, index: number) => (
