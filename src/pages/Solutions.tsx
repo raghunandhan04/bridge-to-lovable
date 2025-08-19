@@ -149,28 +149,45 @@ const Solutions = () => {
             
             {openCategory === "industry" && (
               <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in slide-in-from-top-4 duration-300">
-                {industries.map((industry, index) => (
-                  <Link key={index} to={`/solutions/${industry.name.toLowerCase().replace(/\s+/g, '-').replace('&', '')}`}>
-                    <Card className="card-gradient p-6 hover:scale-[1.02] transition-all duration-300 cursor-pointer">
-                      <div className="flex items-start space-x-4">
-                        <div className={`w-14 h-14 bg-gradient-to-r ${industry.color} rounded-xl flex items-center justify-center`}>
-                          <industry.icon className="w-7 h-7 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold mb-2">{industry.name}</h3>
-                          <p className="text-muted-foreground mb-4 text-sm leading-relaxed">{industry.description}</p>
-                          <div className="space-y-2">
-                            {industry.solutions.map((solution, idx) => (
-                              <Badge key={idx} variant="secondary" className="mr-2 mb-1">
-                                {solution}
-                              </Badge>
-                            ))}
+                {industries.map((industry, index) => {
+                  const getRouteForIndustry = (name: string) => {
+                    switch (name) {
+                      case "Retail & E-commerce":
+                        return "/solutions/retail-ecommerce";
+                      case "Healthcare":
+                        return "/solutions/healthcare";
+                      case "Logistics & Supply Chain":
+                        return "/solutions/logistics-supply-chain";
+                      case "Financial Services":
+                        return "/solutions/financial-services";
+                      default:
+                        return `/solutions/${name.toLowerCase().replace(/\s+/g, '-').replace('&', '')}`;
+                    }
+                  };
+                  
+                  return (
+                    <Link key={index} to={getRouteForIndustry(industry.name)}>
+                      <Card className="card-gradient p-6 hover:scale-[1.02] transition-all duration-300 cursor-pointer">
+                        <div className="flex items-start space-x-4">
+                          <div className={`w-14 h-14 bg-gradient-to-r ${industry.color} rounded-xl flex items-center justify-center`}>
+                            <industry.icon className="w-7 h-7 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold mb-2">{industry.name}</h3>
+                            <p className="text-muted-foreground mb-4 text-sm leading-relaxed">{industry.description}</p>
+                            <div className="space-y-2">
+                              {industry.solutions.map((solution, idx) => (
+                                <Badge key={idx} variant="secondary" className="mr-2 mb-1">
+                                  {solution}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Card>
-                  </Link>
-                ))}
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </Card>
