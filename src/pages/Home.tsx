@@ -278,55 +278,16 @@ const Home = () => {
         </>
       </div>
 
-      {/* Navigation Scroll Buttons */}
-      <div className="fixed right-6 bottom-6 z-50 flex flex-col gap-2">
-        {/* Quick Navigation Menu */}
-        <div className="flex flex-col gap-1 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg border">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => scrollToSection('hero')}
-            className="text-xs px-2 py-1 h-auto"
-          >
-            Top
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => scrollToSection('features')}
-            className="text-xs px-2 py-1 h-auto"
-          >
-            Features
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => scrollToSection('stats')}
-            className="text-xs px-2 py-1 h-auto"
-          >
-            Stats
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => scrollToSection('cta')}
-            className="text-xs px-2 py-1 h-auto"
-          >
-            Contact
-          </Button>
-        </div>
-
-        {/* Back to Top Button */}
-        {showBackToTop && (
-          <Button
-            onClick={scrollToTop}
-            className="p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90"
-            size="icon"
-          >
-            <ChevronUp className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
+      {/* Back to Top Button */}
+      {showBackToTop && (
+        <Button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90"
+          size="icon"
+        >
+          <ChevronUp className="h-5 w-5" />
+        </Button>
+      )}
     </div>
   );
 };
