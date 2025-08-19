@@ -256,8 +256,22 @@ const LiveWebsitePreview = () => {
         const textContent = editingElement.element.textContent?.trim() || '';
         const tagName = editingElement.element.tagName.toLowerCase();
         
-        // Create a more robust override key
-        const overrideKey = `static_override_${currentPage}_${Date.now()}`;
+        // Create a consistent override key based on content and path (not timestamp)
+        const contentHash = btoa(editingElement.value.trim()).replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
+        const overrideKey = `static_override_${currentPage}_${tagName}_${contentHash}`;
+        
+        // Clear any existing overrides for this element first
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('static_override_') && key !== overrideKey) {
+            try {
+              const existingOverride = JSON.parse(localStorage.getItem(key) || '{}');
+              if (existingOverride.original_text?.trim() === editingElement.value.trim() && 
+                  existingOverride.page_path === currentPage) {
+                localStorage.removeItem(key);
+              }
+            } catch (e) {}
+          }
+        });
         
         // Store in localStorage with multiple ways to identify the element
         localStorage.setItem(overrideKey, JSON.stringify({
@@ -270,11 +284,25 @@ const LiveWebsitePreview = () => {
           timestamp: Date.now()
         }));
         
-        // Apply change immediately
+        // Apply change immediately in preview
         editingElement.element.textContent = editValue;
         
         // Mark element as overridden
         editingElement.element.setAttribute('data-overridden', 'true');
+        
+        // Trigger a storage event to sync with actual website
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: overrideKey,
+          newValue: JSON.stringify({
+            original_text: editingElement.value.trim(),
+            override_text: editValue.trim(),
+            element_path: elementPath,
+            tag_name: tagName,
+            text_content: textContent,
+            page_path: currentPage,
+            timestamp: Date.now()
+          })
+        }));
         
         toast({
           title: "Content Updated",

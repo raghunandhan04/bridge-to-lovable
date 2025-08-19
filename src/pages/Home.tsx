@@ -34,7 +34,7 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Apply localStorage overrides when component mounts
+  // Apply localStorage overrides when component mounts and listen for changes
   useEffect(() => {
     const applyStoredOverrides = () => {
       Object.keys(localStorage).forEach(key => {
@@ -84,10 +84,24 @@ const Home = () => {
     };
 
     // Apply overrides after DOM is ready and a short delay to ensure all content is rendered
-    const timeouts = [100, 300, 500]; // Multiple attempts to catch dynamic content
+    const timeouts = [100, 300, 500, 1000]; // Multiple attempts to catch dynamic content
     timeouts.forEach(delay => {
       setTimeout(applyStoredOverrides, delay);
     });
+
+    // Listen for storage events from live editor
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.startsWith('static_override_') && e.newValue) {
+        // Apply the new override immediately
+        setTimeout(applyStoredOverrides, 50);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const scrollToTop = () => {
