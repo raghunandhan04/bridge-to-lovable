@@ -622,77 +622,114 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
              </DialogHeader>
              
              <div className="flex-1 overflow-hidden">
-                <Tabs defaultValue="content" className="h-full flex flex-col">
-                  <div className="px-6 pt-4">
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="content">Content</TabsTrigger>
-                      <TabsTrigger value="visual">Visual Editor</TabsTrigger>
-                      <TabsTrigger value="settings">Settings</TabsTrigger>
-                      <TabsTrigger value="preview">Preview</TabsTrigger>
-                    </TabsList>
-                  </div>
+                 <Tabs defaultValue="content" className="h-full flex flex-col">
+                   <div className="px-6 pt-4">
+                     <TabsList className="grid w-full grid-cols-3">
+                       <TabsTrigger value="content">Content</TabsTrigger>
+                       <TabsTrigger value="settings">Settings</TabsTrigger>
+                       <TabsTrigger value="preview">Preview</TabsTrigger>
+                     </TabsList>
+                   </div>
                  
-                  <TabsContent value="content" className="flex-1 overflow-hidden mt-0 pt-4">
-                    <ScrollArea className="h-full px-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
-                        {/* Main Content - Takes 2/3 of space */}
-                        <div className="lg:col-span-2 space-y-6">
-                          <div>
-                            <Label htmlFor="title" className="text-base font-semibold">Title *</Label>
-                            <Input
-                              id="title"
-                              value={formData.title}
-                              onChange={(e) => {
-                                const newTitle = e.target.value;
-                                setFormData({...formData, title: newTitle});
-                                setBlogStructure(prev => ({...prev, title: newTitle}));
-                                if (!formData.slug) {
-                                  setFormData(prev => ({...prev, slug: generateSlug(newTitle)}));
-                                }
-                              }}
-                              placeholder="Enter an engaging blog title..."
-                              className="text-lg mt-2"
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="excerpt" className="text-base font-semibold">Excerpt</Label>
-                            <p className="text-sm text-muted-foreground mb-2">A brief summary that appears in blog listings</p>
-                            <Textarea
-                              id="excerpt"
-                              value={formData.excerpt}
-                              onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                              rows={3}
-                              placeholder="Write a compelling excerpt to attract readers..."
-                              className="resize-none"
-                            />
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {formData.excerpt.length}/160 characters
-                            </div>
-                          </div>
+                   <TabsContent value="content" className="flex-1 overflow-hidden mt-0 pt-4">
+                     <ScrollArea className="h-full px-6">
+                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
+                         {/* Main Content - Takes 2/3 of space */}
+                         <div className="lg:col-span-2 space-y-6">
+                           <div>
+                             <Label htmlFor="title" className="text-base font-semibold">Title *</Label>
+                             <Input
+                               id="title"
+                               value={formData.title || blogStructure.title}
+                               onChange={(e) => {
+                                 const newTitle = e.target.value;
+                                 setFormData({...formData, title: newTitle});
+                                 setBlogStructure(prev => ({...prev, title: newTitle}));
+                                 if (!formData.slug) {
+                                   setFormData(prev => ({...prev, slug: generateSlug(newTitle)}));
+                                 }
+                               }}
+                               placeholder="Enter an engaging blog title..."
+                               className="text-lg mt-2"
+                             />
+                           </div>
+                           
+                           <div>
+                             <Label htmlFor="excerpt" className="text-base font-semibold">Excerpt</Label>
+                             <p className="text-sm text-muted-foreground mb-2">A brief summary that appears in blog listings</p>
+                             <Textarea
+                               id="excerpt"
+                               value={formData.excerpt}
+                               onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
+                               rows={3}
+                               placeholder="Write a compelling excerpt to attract readers..."
+                               className="resize-none"
+                             />
+                             <div className="text-xs text-muted-foreground mt-1">
+                               {formData.excerpt.length}/160 characters
+                             </div>
+                           </div>
 
-                          <div>
-                            <Label htmlFor="content" className="text-base font-semibold mb-2 block">
-                              Content (Classic Editor)
-                            </Label>
-                            <div className="border rounded-lg">
-                               <AdvancedRichTextEditor
-                                 value={formData.content}
-                                 onChange={(content) => {
-                                   setFormData({...formData, content});
-                                   if (editingBlog) {
-                                     autoSave(content);
-                                   }
-                                 }}
-                                 placeholder="Start writing your amazing blog content..."
-                                 height="500px"
-                               />
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-2">
-                              Switch to Visual Editor tab for drag-and-drop block-based editing
-                            </p>
-                          </div>
-                        </div>
+                           <div className="space-y-4">
+                             <div className="flex items-center gap-2 border-b pb-2">
+                               <Label className="text-base font-semibold">Content Editor</Label>
+                               <div className="flex gap-2">
+                                 <Button
+                                   variant={editorMode === 'classic' ? 'default' : 'outline'}
+                                   size="sm"
+                                   onClick={() => setEditorMode('classic')}
+                                 >
+                                   Classic
+                                 </Button>
+                                 <Button
+                                   variant={editorMode === 'visual' ? 'default' : 'outline'}
+                                   size="sm"
+                                   onClick={() => setEditorMode('visual')}
+                                 >
+                                   Visual
+                                 </Button>
+                               </div>
+                             </div>
+
+                             {editorMode === 'classic' ? (
+                               <div>
+                                 <div className="border rounded-lg">
+                                    <AdvancedRichTextEditor
+                                      value={formData.content}
+                                      onChange={(content) => {
+                                        setFormData({...formData, content});
+                                        if (editingBlog) {
+                                          autoSave(content);
+                                        }
+                                      }}
+                                      placeholder="Start writing your amazing blog content..."
+                                      height="500px"
+                                    />
+                                 </div>
+                               </div>
+                             ) : (
+                               <div>
+                                 <DragDropBlogEditor
+                                   value={{
+                                     ...blogStructure,
+                                     title: formData.title || blogStructure.title,
+                                     featuredImage: formData.featured_image_url
+                                   }}
+                                   onChange={(structure) => {
+                                     setBlogStructure(structure);
+                                     // Sync the title back to formData to enable Create Post button
+                                     setFormData(prev => ({
+                                       ...prev,
+                                       title: structure.title,
+                                       featured_image_url: structure.featuredImage
+                                     }));
+                                   }}
+                                   className="min-h-[600px] border rounded-lg"
+                                 />
+                               </div>
+                             )}
+                           </div>
+                         </div>
 
                        {/* Sidebar - Takes 1/3 of space */}
                        <div className="space-y-6">
@@ -802,30 +839,6 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                    </ScrollArea>
                   </TabsContent>
                   
-                  <TabsContent value="visual" className="flex-1 overflow-hidden mt-0 pt-4">
-                    <ScrollArea className="h-full px-6">
-                      <div className="pb-6">
-                        <DragDropBlogEditor
-                          value={{
-                            ...blogStructure,
-                            title: formData.title,
-                            featuredImage: formData.featured_image_url
-                          }}
-                          onChange={(structure) => {
-                            setBlogStructure(structure);
-                            setEditorMode('visual');
-                            // Update form data
-                            setFormData(prev => ({
-                              ...prev,
-                              title: structure.title,
-                              featured_image_url: structure.featuredImage
-                            }));
-                          }}
-                          className="min-h-[600px]"
-                        />
-                      </div>
-                    </ScrollArea>
-                  </TabsContent>
                  
                  <TabsContent value="settings" className="flex-1 overflow-hidden mt-0 pt-4">
                    <ScrollArea className="h-full px-6">
@@ -947,14 +960,14 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                 >
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handleSave}
-                  className="bg-primary hover:bg-primary/90"
-                  disabled={!formData.title.trim()}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {editingBlog ? 'Update Post' : 'Create Post'}
-                </Button>
+                 <Button 
+                   onClick={handleSave}
+                   className="bg-primary hover:bg-primary/90"
+                   disabled={!(formData.title?.trim() || blogStructure.title?.trim())}
+                 >
+                   <Save className="w-4 h-4 mr-2" />
+                   {editingBlog ? 'Update Post' : 'Create Post'}
+                 </Button>
               </div>
             </div>
           </DialogContent>
