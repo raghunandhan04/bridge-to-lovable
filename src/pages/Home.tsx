@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, Zap, Cloud, BarChart3, Cpu, Users, Award, TrendingUp, ChevronUp } from "lucide-react";
+import { ArrowRight, Zap, Cloud, BarChart3, Cpu, Users, Award, TrendingUp, ChevronUp, ChevronDown } from "lucide-react";
 import { useContentSections } from "@/hooks/useContentSections";
 import { DynamicSection } from "@/components/dynamic/DynamicSection";
 
@@ -108,6 +108,20 @@ const Home = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const scrollToNext = () => {
+    const element = document.getElementById('features');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const features = [
     {
       icon: Zap,
@@ -155,7 +169,7 @@ const Home = () => {
       <div className="space-y-16">
         <>
           {/* Fallback Hero Section */}
-          <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background overflow-hidden">
+          <section id="hero" className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background overflow-hidden">
             <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
             <div className="container mx-auto px-4 lg:px-8 text-center relative z-10">
               <div className="max-w-4xl mx-auto space-y-8">
@@ -182,10 +196,22 @@ const Home = () => {
                 </div>
               </div>
             </div>
+            
+            {/* Scroll down indicator */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={scrollToNext}
+                className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white"
+              >
+                <ChevronDown className="h-6 w-6" />
+              </Button>
+            </div>
           </section>
 
           {/* Features Section */}
-          <section className="py-20 bg-muted/30">
+          <section id="features" className="py-20 bg-muted/30">
             <div className="container mx-auto px-4 lg:px-8">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-hero mb-4">
@@ -211,7 +237,7 @@ const Home = () => {
           </section>
 
           {/* Stats Section */}
-          <section className="py-20 bg-gradient-primary text-white">
+          <section id="stats" className="py-20 bg-gradient-primary text-white">
             <div className="container mx-auto px-4 lg:px-8">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
                 {stats.map((stat, index) => (
@@ -225,7 +251,7 @@ const Home = () => {
           </section>
 
           {/* CTA Section */}
-          <section className="py-20 bg-background">
+          <section id="cta" className="py-20 bg-background">
             <div className="container mx-auto px-4 lg:px-8 text-center">
               <div className="max-w-3xl mx-auto space-y-8">
                 <h2 className="text-4xl md:text-5xl font-bold text-hero">
@@ -252,16 +278,55 @@ const Home = () => {
         </>
       </div>
 
-      {/* Back to Top Button */}
-      {showBackToTop && (
-        <Button
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90"
-          size="icon"
-        >
-          <ChevronUp className="h-5 w-5" />
-        </Button>
-      )}
+      {/* Navigation Scroll Buttons */}
+      <div className="fixed right-6 bottom-6 z-50 flex flex-col gap-2">
+        {/* Quick Navigation Menu */}
+        <div className="flex flex-col gap-1 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg border">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => scrollToSection('hero')}
+            className="text-xs px-2 py-1 h-auto"
+          >
+            Top
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => scrollToSection('features')}
+            className="text-xs px-2 py-1 h-auto"
+          >
+            Features
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => scrollToSection('stats')}
+            className="text-xs px-2 py-1 h-auto"
+          >
+            Stats
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => scrollToSection('cta')}
+            className="text-xs px-2 py-1 h-auto"
+          >
+            Contact
+          </Button>
+        </div>
+
+        {/* Back to Top Button */}
+        {showBackToTop && (
+          <Button
+            onClick={scrollToTop}
+            className="p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90"
+            size="icon"
+          >
+            <ChevronUp className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
