@@ -260,7 +260,7 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
     const isSelected = selectedBlockId === block.id;
     
     return (
-      <Card className={cn("mb-4", isSelected && "ring-2 ring-primary")}>
+      <Card className={cn("mb-4 transition-all duration-200", isSelected && "ring-2 ring-primary shadow-lg")}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -271,7 +271,7 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
             </div>
             <div className="flex items-center gap-1">
               <Button
-                variant="ghost"
+                variant={isSelected ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setSelectedBlockId(isSelected ? null : block.id)}
               >
@@ -281,6 +281,7 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => deleteBlock(block.id)}
+                className="hover:bg-destructive/10 hover:text-destructive"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -289,19 +290,113 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
         </CardHeader>
         
         <CardContent>
-          {/* Block Preview */}
-          <div className="mb-4">
-            {renderBlockPreview(block)}
-          </div>
-          
-          {/* Block Settings */}
-          {isSelected && (
-            <div className="border-t pt-4 space-y-4">
-              {renderBlockSettings(block)}
+          {/* Always show editing interface */}
+          <div className="space-y-4">
+            {/* Quick Edit Inline Controls */}
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <h4 className="text-sm font-medium mb-3 text-muted-foreground">Quick Edit</h4>
+              {renderInlineControls(block)}
             </div>
-          )}
+            
+            {/* Block Preview */}
+            <div className="border-2 border-dashed border-muted-foreground/20 p-4 rounded-lg bg-muted/20">
+              <div className="text-xs text-muted-foreground mb-2">Preview:</div>
+              {renderBlockPreview(block)}
+            </div>
+            
+            {/* Advanced Settings (shown when selected) */}
+            {isSelected && (
+              <div className="border-t pt-4 space-y-4">
+                <h4 className="text-sm font-medium text-muted-foreground">Advanced Settings</h4>
+                {renderBlockSettings(block)}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
+    );
+  };
+
+  // Render inline controls for quick editing
+  const renderInlineControls = (block: ContentBlock) => {
+    return (
+      <div className="space-y-3">
+        {/* Text Content Input (for blocks with text) */}
+        {(block.type.includes('text') || block.type.includes('image')) && block.type !== 'full-width-image' && (
+          <div>
+            <Label className="text-xs font-medium">Text Content</Label>
+            <Textarea
+              value={block.content.text || ''}
+              onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+              placeholder="Enter your text content here..."
+              className="mt-1 min-h-[80px]"
+            />
+          </div>
+        )}
+
+        {/* Image URL Input (for blocks with images) */}
+        {(block.type.includes('image') || block.type === 'image-caption') && block.type !== 'video-embed' && (
+          <div>
+            <Label className="text-xs font-medium">Image URL</Label>
+            <Input
+              value={block.content.imageUrl || ''}
+              onChange={(e) => updateBlock(block.id, { imageUrl: e.target.value })}
+              placeholder="https://example.com/image.jpg"
+              className="mt-1"
+            />
+          </div>
+        )}
+
+        {/* Video URL Input (for video blocks) */}
+        {block.type === 'video-embed' && (
+          <div>
+            <Label className="text-xs font-medium">Video URL (YouTube/Vimeo Embed)</Label>
+            <Input
+              value={block.content.videoUrl || ''}
+              onChange={(e) => updateBlock(block.id, { videoUrl: e.target.value })}
+              placeholder="https://www.youtube.com/embed/VIDEO_ID"
+              className="mt-1"
+            />
+          </div>
+        )}
+
+        {/* Caption Input (for caption blocks) */}
+        {(block.type === 'image-caption' || block.type === 'full-width-image') && (
+          <div>
+            <Label className="text-xs font-medium">Caption</Label>
+            <Input
+              value={block.content.caption || ''}
+              onChange={(e) => updateBlock(block.id, { caption: e.target.value })}
+              placeholder="Enter image caption..."
+              className="mt-1"
+            />
+          </div>
+        )}
+
+        {/* Quick Action Buttons */}
+        <div className="flex items-center gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedBlockId(selectedBlockId === block.id ? null : block.id)}
+            className="text-xs"
+          >
+            {selectedBlockId === block.id ? 'Hide Advanced' : 'Show Advanced'}
+          </Button>
+          <div className="flex items-center gap-1 ml-auto">
+            <Label className="text-xs">Width:</Label>
+            <Input
+              type="number"
+              min="20"
+              max="100"
+              value={block.content.width || 100}
+              onChange={(e) => updateBlock(block.id, { width: parseInt(e.target.value) || 100 })}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground">%</span>
+          </div>
+        </div>
+      </div>
     );
   };
 
