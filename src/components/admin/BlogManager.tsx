@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AdvancedRichTextEditor from '@/components/ui/advanced-rich-text-editor';
+import EnhancedRichTextEditor from '@/components/ui/enhanced-rich-text-editor';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Plus, 
@@ -509,7 +509,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                          <div>
                            <Label htmlFor="content" className="text-base font-semibold mb-2 block">Content</Label>
                            <div className="border rounded-lg">
-                             <AdvancedRichTextEditor
+                             <EnhancedRichTextEditor
                                value={formData.content}
                                onChange={(content) => {
                                  setFormData({...formData, content});

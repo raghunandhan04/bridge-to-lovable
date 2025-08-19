@@ -46,9 +46,16 @@ import {
   Settings
 } from 'lucide-react';
 
-// Register Quill modules for tables
-const TableBetter = require('quill-better-table');
-Quill.register('modules/better-table', TableBetter.TableModule);
+// Register Quill modules for tables (conditional registration to prevent errors)
+let TableBetter;
+try {
+  TableBetter = require('quill-better-table');
+  if (TableBetter && TableBetter.TableModule) {
+    Quill.register('modules/better-table', TableBetter.TableModule);
+  }
+} catch (error) {
+  console.warn('Failed to load quill-better-table:', error);
+}
 
 interface AdvancedRichTextEditorProps {
   value: string;
