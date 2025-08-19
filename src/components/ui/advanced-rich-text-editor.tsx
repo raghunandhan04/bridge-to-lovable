@@ -46,16 +46,7 @@ import {
   Settings
 } from 'lucide-react';
 
-// Register Quill modules for tables (conditional registration to prevent errors)
-let TableBetter;
-try {
-  TableBetter = require('quill-better-table');
-  if (TableBetter && TableBetter.TableModule) {
-    Quill.register('modules/better-table', TableBetter.TableModule);
-  }
-} catch (error) {
-  console.warn('Failed to load quill-better-table:', error);
-}
+// Simple table creation without external dependencies
 
 interface AdvancedRichTextEditorProps {
   value: string;
@@ -113,19 +104,6 @@ const AdvancedRichTextEditor: React.FC<AdvancedRichTextEditorProps> = ({
 
   // Enhanced toolbar configuration with tables and charts
   const modules = useMemo(() => ({
-    'better-table': {
-      operationMenu: {
-        items: {
-          unmergeCells: {
-            text: 'Another unmerge cells name'
-          }
-        },
-        color: {
-          colors: ['green', 'red', 'yellow', 'blue', 'white'],
-          text: 'Background Colors:'
-        }
-      }
-    },
     toolbar: {
       container: [
         // Text formatting
@@ -185,8 +163,7 @@ const AdvancedRichTextEditor: React.FC<AdvancedRichTextEditorProps> = ({
     'color', 'background',
     'script', 'align', 'direction',
     'list', 'bullet', 'indent',
-    'link', 'image', 'video', 'blockquote', 'code-block',
-    'table', 'table-cell-line', 'table-cell'
+    'link', 'image', 'video', 'blockquote', 'code-block'
   ];
 
   // Handle content change
@@ -212,8 +189,10 @@ const AdvancedRichTextEditor: React.FC<AdvancedRichTextEditorProps> = ({
   const insertTable = () => {
     const quill = quillRef.current?.getEditor();
     if (quill) {
-      const tableModule = quill.getModule('better-table');
-      tableModule.insertTable(tableRows, tableCols);
+      const tableHtml = generateTableHtml(tableRows, tableCols);
+      const range = quill.getSelection();
+      const index = range ? range.index : quill.getLength();
+      quill.clipboard.dangerouslyPasteHTML(index, tableHtml);
       setShowTableDialog(false);
     }
   };
@@ -224,9 +203,34 @@ const AdvancedRichTextEditor: React.FC<AdvancedRichTextEditorProps> = ({
     const quill = quillRef.current?.getEditor();
     if (quill) {
       const range = quill.getSelection();
-      quill.insertEmbed(range?.index || 0, 'chart', chartHtml);
+      const index = range ? range.index : quill.getLength();
+      quill.clipboard.dangerouslyPasteHTML(index, chartHtml);
       setShowChartDialog(false);
     }
+  };
+
+  // Generate table HTML
+  const generateTableHtml = (rows: number, cols: number) => {
+    let tableHtml = '<table style="width: 100%; border-collapse: collapse; margin: 20px 0; border: 1px solid #e5e7eb;">';
+    
+    // Create header row
+    tableHtml += '<tr>';
+    for (let j = 0; j < cols; j++) {
+      tableHtml += `<th style="border: 1px solid #e5e7eb; padding: 12px; background-color: #f9fafb; font-weight: 600;">Header ${j + 1}</th>`;
+    }
+    tableHtml += '</tr>';
+    
+    // Create data rows
+    for (let i = 1; i < rows; i++) {
+      tableHtml += '<tr>';
+      for (let j = 0; j < cols; j++) {
+        tableHtml += `<td style="border: 1px solid #e5e7eb; padding: 12px;">Cell ${i + 1}-${j + 1}</td>`;
+      }
+      tableHtml += '</tr>';
+    }
+    
+    tableHtml += '</table>';
+    return tableHtml;
   };
 
   // Generate chart HTML
