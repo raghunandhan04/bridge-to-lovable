@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdvancedRichTextEditor from '@/components/ui/advanced-rich-text-editor';
+import DragDropBlogEditor, { BlogStructure, ContentBlock } from '@/components/ui/drag-drop-blog-editor';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Plus, 
@@ -45,6 +46,8 @@ interface Blog {
   featured: boolean;
   featured_image_url: string;
   created_at: string;
+  // Enhanced blog structure for new editor
+  blog_structure?: BlogStructure;
 }
 
 interface BlogManagerProps {
@@ -72,9 +75,31 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     featured: false,
     featured_image_url: ''
   });
+  
+  const [blogStructure, setBlogStructure] = useState<BlogStructure>({
+    title: '',
+    featuredImage: '',
+    author: 'Admin',
+    date: new Date().toISOString().split('T')[0],
+    blocks: []
+  });
+  
+  const [editorMode, setEditorMode] = useState<'classic' | 'visual'>('visual');
   const { toast } = useToast();
   const [migrating, setMigrating] = useState(false);
   const [addingFeatured, setAddingFeatured] = useState(false);
+
+  // Block types for preview
+  const blockTypes = [
+    { type: 'left-image-right-text', name: 'Left Image + Right Text' },
+    { type: 'right-image-left-text', name: 'Right Image + Left Text' },
+    { type: 'full-width-image', name: 'Full Width Image' },
+    { type: 'full-width-text', name: 'Full Width Text' },
+    { type: 'image-caption', name: 'Image + Caption' },
+    { type: 'video-embed', name: 'Video Embed' },
+    { type: 'table', name: 'Table' },
+    { type: 'chart', name: 'Chart' }
+  ];
 
   useEffect(() => {
     fetchBlogs();
@@ -179,31 +204,59 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     }
 
     try {
+      // Prepare blog data based on editor mode
       const blogData = {
         ...formData,
         slug: formData.slug || generateSlug(formData.title),
       };
 
-      if (editingBlog) {
-        const { error } = await supabase
-          .from('blogs')
-          .update(blogData)
-          .eq('id', editingBlog.id);
-        if (error) throw error;
-        toast({ 
-          title: "Success", 
-          description: "Blog updated successfully!" 
-        });
+      // Add blog_structure for visual editor
+      if (editorMode === 'visual') {
+        const structuredData = {
+          ...blogData,
+          blog_structure: {
+            ...blogStructure,
+            title: formData.title,
+            featuredImage: formData.featured_image_url
+          }
+        };
+        
+        // Convert structure to HTML content for backward compatibility
+        const htmlContent = convertStructureToHTML(blogStructure);
+        structuredData.content = htmlContent;
+        
+        if (editingBlog) {
+          const { error } = await supabase
+            .from('blogs')
+            .update(structuredData)
+            .eq('id', editingBlog.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('blogs')
+            .insert([structuredData]);
+          if (error) throw error;
+        }
       } else {
-        const { error } = await supabase
-          .from('blogs')
-          .insert([blogData]);
-        if (error) throw error;
-        toast({ 
-          title: "Success", 
-          description: "Blog created successfully!" 
-        });
+        // Classic editor - save as before
+        if (editingBlog) {
+          const { error } = await supabase
+            .from('blogs')
+            .update(blogData)
+            .eq('id', editingBlog.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('blogs')
+            .insert([blogData]);
+          if (error) throw error;
+        }
       }
+
+      toast({ 
+        title: "Success", 
+        description: editingBlog ? "Blog updated successfully!" : "Blog created successfully!" 
+      });
 
       setEditingBlog(null);
       setShowCreateForm(false);
@@ -229,6 +282,14 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       featured: false,
       featured_image_url: ''
     });
+    setBlogStructure({
+      title: '',
+      featuredImage: '',
+      author: 'Admin',
+      date: new Date().toISOString().split('T')[0],
+      blocks: []
+    });
+    setEditorMode('visual');
   };
 
   const handleEdit = (blog: Blog) => {
@@ -244,6 +305,15 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       featured: blog.featured,
       featured_image_url: blog.featured_image_url || ''
     });
+    
+    // Load structured data if available
+    if (blog.blog_structure) {
+      setBlogStructure(blog.blog_structure);
+      setEditorMode('visual');
+    } else {
+      // Default to classic editor for old blogs
+      setEditorMode('classic');
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -305,8 +375,104 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         variant: "destructive",
       });
     } finally {
-      setAddingFeatured(false);
+    setAddingFeatured(false);
     }
+  };
+
+  // Convert blog structure to HTML for backward compatibility
+  const convertStructureToHTML = (structure: BlogStructure): string => {
+    let html = '';
+    
+    structure.blocks.forEach(block => {
+      const { content } = block;
+      
+      switch (block.type) {
+        case 'left-image-right-text':
+          html += `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-8">
+              <div>
+                <img src="${content.imageUrl}" alt="" class="w-full rounded-lg" />
+              </div>
+              <div>
+                <p>${content.text}</p>
+              </div>
+            </div>
+          `;
+          break;
+        case 'right-image-left-text':
+          html += `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-8">
+              <div>
+                <p>${content.text}</p>
+              </div>
+              <div>
+                <img src="${content.imageUrl}" alt="" class="w-full rounded-lg" />
+              </div>
+            </div>
+          `;
+          break;
+        case 'full-width-image':
+          html += `
+            <div class="mb-8">
+              <img src="${content.imageUrl}" alt="" class="w-full rounded-lg" />
+              ${content.caption ? `<p class="text-sm text-gray-600 mt-2">${content.caption}</p>` : ''}
+            </div>
+          `;
+          break;
+        case 'full-width-text':
+          html += `<div class="mb-8"><p>${content.text}</p></div>`;
+          break;
+        case 'image-caption':
+          html += `
+            <div class="mb-8">
+              <img src="${content.imageUrl}" alt="" class="w-full rounded-lg" />
+              ${content.caption ? `<p class="text-sm text-gray-600 mt-2">${content.caption}</p>` : ''}
+            </div>
+          `;
+          break;
+        case 'video-embed':
+          html += `
+            <div class="mb-8">
+              <div class="aspect-video">
+                <iframe src="${content.videoUrl}" class="w-full h-full rounded-lg" allowfullscreen></iframe>
+              </div>
+            </div>
+          `;
+          break;
+        case 'table':
+          if (content.tableData) {
+            html += '<table class="w-full border-collapse border mb-8">';
+            html += '<thead><tr>';
+            content.tableData.headers.forEach(header => {
+              html += `<th class="border p-3 bg-gray-50">${header}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            content.tableData.rows.forEach(row => {
+              html += '<tr>';
+              row.forEach(cell => {
+                html += `<td class="border p-3">${cell}</td>`;
+              });
+              html += '</tr>';
+            });
+            html += '</tbody></table>';
+          }
+          break;
+        case 'chart':
+          if (content.chartData) {
+            html += `
+              <div class="mb-8 text-center">
+                <h3 class="text-lg font-semibold mb-4">${content.chartData.title}</h3>
+                <div class="bg-gray-100 p-6 rounded-lg">
+                  <p>Chart: ${content.chartData.type} - ${content.chartData.labels.join(', ')}</p>
+                </div>
+              </div>
+            `;
+          }
+          break;
+      }
+    });
+    
+    return html;
   };
 
   if (loading) return (
@@ -460,69 +626,77 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
              </DialogHeader>
              
              <div className="flex-1 overflow-hidden">
-               <Tabs defaultValue="content" className="h-full flex flex-col">
-                 <div className="px-6 pt-4">
-                   <TabsList className="grid w-full grid-cols-3">
-                     <TabsTrigger value="content">Content</TabsTrigger>
-                     <TabsTrigger value="settings">Settings</TabsTrigger>
-                     <TabsTrigger value="preview">Preview</TabsTrigger>
-                   </TabsList>
-                 </div>
+                <Tabs defaultValue="content" className="h-full flex flex-col">
+                  <div className="px-6 pt-4">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="content">Content</TabsTrigger>
+                      <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+                      <TabsTrigger value="settings">Settings</TabsTrigger>
+                      <TabsTrigger value="preview">Preview</TabsTrigger>
+                    </TabsList>
+                  </div>
                  
-                 <TabsContent value="content" className="flex-1 overflow-hidden mt-0 pt-4">
-                   <ScrollArea className="h-full px-6">
-                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
-                       {/* Main Content - Takes 2/3 of space */}
-                       <div className="lg:col-span-2 space-y-6">
-                         <div>
-                           <Label htmlFor="title" className="text-base font-semibold">Title *</Label>
-                           <Input
-                             id="title"
-                             value={formData.title}
-                             onChange={(e) => {
-                               setFormData({...formData, title: e.target.value});
-                               if (!formData.slug) {
-                                 setFormData(prev => ({...prev, slug: generateSlug(e.target.value)}));
-                               }
-                             }}
-                             placeholder="Enter an engaging blog title..."
-                             className="text-lg mt-2"
-                           />
-                         </div>
-                         
-                         <div>
-                           <Label htmlFor="excerpt" className="text-base font-semibold">Excerpt</Label>
-                           <p className="text-sm text-muted-foreground mb-2">A brief summary that appears in blog listings</p>
-                           <Textarea
-                             id="excerpt"
-                             value={formData.excerpt}
-                             onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                             rows={3}
-                             placeholder="Write a compelling excerpt to attract readers..."
-                             className="resize-none"
-                           />
-                           <div className="text-xs text-muted-foreground mt-1">
-                             {formData.excerpt.length}/160 characters
-                           </div>
-                         </div>
+                  <TabsContent value="content" className="flex-1 overflow-hidden mt-0 pt-4">
+                    <ScrollArea className="h-full px-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
+                        {/* Main Content - Takes 2/3 of space */}
+                        <div className="lg:col-span-2 space-y-6">
+                          <div>
+                            <Label htmlFor="title" className="text-base font-semibold">Title *</Label>
+                            <Input
+                              id="title"
+                              value={formData.title}
+                              onChange={(e) => {
+                                const newTitle = e.target.value;
+                                setFormData({...formData, title: newTitle});
+                                setBlogStructure(prev => ({...prev, title: newTitle}));
+                                if (!formData.slug) {
+                                  setFormData(prev => ({...prev, slug: generateSlug(newTitle)}));
+                                }
+                              }}
+                              placeholder="Enter an engaging blog title..."
+                              className="text-lg mt-2"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="excerpt" className="text-base font-semibold">Excerpt</Label>
+                            <p className="text-sm text-muted-foreground mb-2">A brief summary that appears in blog listings</p>
+                            <Textarea
+                              id="excerpt"
+                              value={formData.excerpt}
+                              onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
+                              rows={3}
+                              placeholder="Write a compelling excerpt to attract readers..."
+                              className="resize-none"
+                            />
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {formData.excerpt.length}/160 characters
+                            </div>
+                          </div>
 
-                         <div>
-                           <Label htmlFor="content" className="text-base font-semibold mb-2 block">Content</Label>
-                           <div className="border rounded-lg">
-                              <AdvancedRichTextEditor
-                                value={formData.content}
-                                onChange={(content) => {
-                                  setFormData({...formData, content});
-                                  if (editingBlog) {
-                                    autoSave(content);
-                                  }
-                                }}
-                                placeholder="Start writing your amazing blog content..."
-                                height="500px"
-                              />
-                           </div>
-                         </div>
-                       </div>
+                          <div>
+                            <Label htmlFor="content" className="text-base font-semibold mb-2 block">
+                              Content (Classic Editor)
+                            </Label>
+                            <div className="border rounded-lg">
+                               <AdvancedRichTextEditor
+                                 value={formData.content}
+                                 onChange={(content) => {
+                                   setFormData({...formData, content});
+                                   if (editingBlog) {
+                                     autoSave(content);
+                                   }
+                                 }}
+                                 placeholder="Start writing your amazing blog content..."
+                                 height="500px"
+                               />
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Switch to Visual Editor tab for drag-and-drop block-based editing
+                            </p>
+                          </div>
+                        </div>
 
                        {/* Sidebar - Takes 1/3 of space */}
                        <div className="space-y-6">
@@ -630,7 +804,32 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                        </div>
                      </div>
                    </ScrollArea>
-                 </TabsContent>
+                  </TabsContent>
+                  
+                  <TabsContent value="visual" className="flex-1 overflow-hidden mt-0 pt-4">
+                    <ScrollArea className="h-full px-6">
+                      <div className="pb-6">
+                        <DragDropBlogEditor
+                          value={{
+                            ...blogStructure,
+                            title: formData.title,
+                            featuredImage: formData.featured_image_url
+                          }}
+                          onChange={(structure) => {
+                            setBlogStructure(structure);
+                            setEditorMode('visual');
+                            // Update form data
+                            setFormData(prev => ({
+                              ...prev,
+                              title: structure.title,
+                              featured_image_url: structure.featuredImage
+                            }));
+                          }}
+                          className="min-h-[600px]"
+                        />
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
                  
                  <TabsContent value="settings" className="flex-1 overflow-hidden mt-0 pt-4">
                    <ScrollArea className="h-full px-6">
@@ -671,24 +870,68 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                    </ScrollArea>
                  </TabsContent>
 
-                 <TabsContent value="preview" className="flex-1 overflow-hidden mt-0 pt-4">
-                   <ScrollArea className="h-full px-6">
-                     <div className="border rounded-lg p-6 bg-background mb-6">
-                       <div className="prose prose-sm max-w-none">
-                         {formData.featured_image_url && (
-                           <img 
-                             src={formData.featured_image_url} 
-                             alt={formData.title} 
-                             className="w-full h-48 object-cover rounded mb-6"
-                           />
-                         )}
-                         <h1 className="text-3xl font-bold mb-2">{formData.title || 'Blog Title'}</h1>
-                         <p className="text-muted-foreground mb-6">{formData.excerpt || 'Blog excerpt will appear here...'}</p>
-                         <div dangerouslySetInnerHTML={{ __html: formData.content || '<p>Blog content will appear here...</p>' }} />
-                       </div>
-                     </div>
-                   </ScrollArea>
-                 </TabsContent>
+                  <TabsContent value="preview" className="flex-1 overflow-hidden mt-0 pt-4">
+                    <ScrollArea className="h-full px-6">
+                      <div className="border rounded-lg p-6 bg-background mb-6">
+                        <div className="prose prose-sm max-w-none">
+                          {editorMode === 'visual' ? (
+                            // Visual editor preview
+                            <div className="max-w-4xl mx-auto">
+                              {blogStructure.featuredImage && (
+                                <img 
+                                  src={blogStructure.featuredImage} 
+                                  alt={blogStructure.title}
+                                  className="w-full h-64 object-cover rounded-lg mb-8"
+                                />
+                              )}
+                              
+                              <header className="mb-8">
+                                <h1 className="text-4xl font-bold mb-4">{blogStructure.title || 'Blog Title'}</h1>
+                                <div className="flex items-center gap-4 text-muted-foreground">
+                                  <span>By {blogStructure.author}</span>
+                                  <span>•</span>
+                                  <span>{blogStructure.date}</span>
+                                </div>
+                              </header>
+
+                              <div className="space-y-8">
+                                {blogStructure.blocks.map((block) => (
+                                  <div key={block.id}>
+                                    {/* Render block preview here - simplified for now */}
+                                    <div className="p-4 border rounded-lg">
+                                      <span className="text-sm text-muted-foreground">
+                                        {blockTypes.find(t => t.type === block.type)?.name} Block
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                                
+                                {blogStructure.blocks.length === 0 && (
+                                  <div className="text-center py-8 text-muted-foreground">
+                                    No content blocks added yet. Switch to Visual Editor tab to add blocks.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            // Classic editor preview
+                            <>
+                              {formData.featured_image_url && (
+                                <img 
+                                  src={formData.featured_image_url} 
+                                  alt={formData.title} 
+                                  className="w-full h-48 object-cover rounded mb-6"
+                                />
+                              )}
+                              <h1 className="text-3xl font-bold mb-2">{formData.title || 'Blog Title'}</h1>
+                              <p className="text-muted-foreground mb-6">{formData.excerpt || 'Blog excerpt will appear here...'}</p>
+                              <div dangerouslySetInnerHTML={{ __html: formData.content || '<p>Blog content will appear here...</p>' }} />
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
                </Tabs>
              </div>
 
