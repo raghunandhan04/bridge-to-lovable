@@ -29,8 +29,11 @@ import {
   AlignRight,
   ImageIcon,
   FileText,
-  Monitor
+  Monitor,
+  Upload,
+  Link
 } from 'lucide-react';
+import { FileUploadButton } from '@/components/ui/file-upload';
 
 // Block type definitions
 export interface ContentBlock {
@@ -337,26 +340,78 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
         {/* Image URL Input (for blocks with images) */}
         {(block.type.includes('image') || block.type === 'image-caption') && block.type !== 'video-embed' && (
           <div>
-            <Label className="text-xs font-medium">Image URL</Label>
-            <Input
-              value={block.content.imageUrl || ''}
-              onChange={(e) => updateBlock(block.id, { imageUrl: e.target.value })}
-              placeholder="https://example.com/image.jpg"
-              className="mt-1"
-            />
+            <Label className="text-xs font-medium">Image</Label>
+            <div className="mt-1 space-y-2">
+              {/* URL Input */}
+              <div className="flex gap-2">
+                <Input
+                  value={block.content.imageUrl || ''}
+                  onChange={(e) => updateBlock(block.id, { imageUrl: e.target.value })}
+                  placeholder="Paste image URL or upload below"
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateBlock(block.id, { imageUrl: '' })}
+                  className="px-2"
+                >
+                  <Link className="w-3 h-3" />
+                </Button>
+              </div>
+              
+              {/* Upload Button */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Or:</span>
+                <FileUploadButton
+                  acceptedTypes="image"
+                  onUploadComplete={(url) => updateBlock(block.id, { imageUrl: url })}
+                  variant="outline"
+                  size="sm"
+                />
+              </div>
+            </div>
           </div>
         )}
 
         {/* Video URL Input (for video blocks) */}
         {block.type === 'video-embed' && (
           <div>
-            <Label className="text-xs font-medium">Video URL (YouTube/Vimeo Embed)</Label>
-            <Input
-              value={block.content.videoUrl || ''}
-              onChange={(e) => updateBlock(block.id, { videoUrl: e.target.value })}
-              placeholder="https://www.youtube.com/embed/VIDEO_ID"
-              className="mt-1"
-            />
+            <Label className="text-xs font-medium">Video</Label>
+            <div className="mt-1 space-y-2">
+              {/* URL Input */}
+              <div className="flex gap-2">
+                <Input
+                  value={block.content.videoUrl || ''}
+                  onChange={(e) => updateBlock(block.id, { videoUrl: e.target.value })}
+                  placeholder="Paste video URL or upload below"
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateBlock(block.id, { videoUrl: '' })}
+                  className="px-2"
+                >
+                  <Link className="w-3 h-3" />
+                </Button>
+              </div>
+              
+              {/* Upload Button */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Or:</span>
+                <FileUploadButton
+                  acceptedTypes="video"
+                  onUploadComplete={(url) => updateBlock(block.id, { videoUrl: url })}
+                  variant="outline"
+                  size="sm"
+                />
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                For YouTube videos, use embed URL: https://www.youtube.com/embed/VIDEO_ID
+              </p>
+            </div>
           </div>
         )}
 
@@ -409,16 +464,25 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             <div className={cn("order-2 md:order-1")}>
-              <img 
-                src={content.imageUrl} 
-                alt=""
-                className={cn(
-                  "w-full h-48 object-cover rounded-lg",
-                  content.hasBorder && "border-2",
-                  content.hasShadow && "shadow-lg"
-                )}
-                style={{ width: `${content.width}%` }}
-              />
+              {content.imageUrl ? (
+                <img 
+                  src={content.imageUrl} 
+                  alt=""
+                  className={cn(
+                    "w-full h-48 object-cover rounded-lg",
+                    content.hasBorder && "border-2",
+                    content.hasShadow && "shadow-lg"
+                  )}
+                  style={{ width: `${content.width}%` }}
+                />
+              ) : (
+                <div className="w-full h-48 bg-muted/50 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <Image className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No image added</p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className={cn("order-1 md:order-2", `text-${content.alignment}`)}>
               <div 
@@ -428,7 +492,7 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
                 )}
                 style={{ color: content.textColor }}
               >
-                {content.text}
+                {content.text || 'Add your text content here...'}
               </div>
             </div>
           </div>
@@ -445,20 +509,29 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
                 )}
                 style={{ color: content.textColor }}
               >
-                {content.text}
+                {content.text || 'Add your text content here...'}
               </div>
             </div>
             <div className="order-2">
-              <img 
-                src={content.imageUrl} 
-                alt=""
-                className={cn(
-                  "w-full h-48 object-cover rounded-lg",
-                  content.hasBorder && "border-2",
-                  content.hasShadow && "shadow-lg"
-                )}
-                style={{ width: `${content.width}%` }}
-              />
+              {content.imageUrl ? (
+                <img 
+                  src={content.imageUrl} 
+                  alt=""
+                  className={cn(
+                    "w-full h-48 object-cover rounded-lg",
+                    content.hasBorder && "border-2",
+                    content.hasShadow && "shadow-lg"
+                  )}
+                  style={{ width: `${content.width}%` }}
+                />
+              ) : (
+                <div className="w-full h-48 bg-muted/50 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <Image className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No image added</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -466,16 +539,25 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
       case 'full-width-image':
         return (
           <div className={cn(`text-${content.alignment}`)}>
-            <img 
-              src={content.imageUrl} 
-              alt=""
-              className={cn(
-                "w-full h-64 object-cover rounded-lg",
-                content.hasBorder && "border-2",
-                content.hasShadow && "shadow-lg"
-              )}
-              style={{ width: `${content.width}%` }}
-            />
+            {content.imageUrl ? (
+              <img 
+                src={content.imageUrl} 
+                alt=""
+                className={cn(
+                  "w-full h-64 object-cover rounded-lg",
+                  content.hasBorder && "border-2",
+                  content.hasShadow && "shadow-lg"
+                )}
+                style={{ width: `${content.width}%` }}
+              />
+            ) : (
+              <div className="w-full h-64 bg-muted/50 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <Image className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No image added</p>
+                </div>
+              </div>
+            )}
             {content.caption && (
               <p className="text-sm text-muted-foreground mt-2">{content.caption}</p>
             )}
@@ -492,7 +574,7 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
               )}
               style={{ color: content.textColor }}
             >
-              {content.text}
+              {content.text || 'Add your full-width text content here...'}
             </div>
           </div>
         );
@@ -500,16 +582,25 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
       case 'image-caption':
         return (
           <div className={cn(`text-${content.alignment}`)}>
-            <img 
-              src={content.imageUrl} 
-              alt=""
-              className={cn(
-                "w-full h-48 object-cover rounded-lg",
-                content.hasBorder && "border-2",
-                content.hasShadow && "shadow-lg"
-              )}
-              style={{ width: `${content.width}%` }}
-            />
+            {content.imageUrl ? (
+              <img 
+                src={content.imageUrl} 
+                alt=""
+                className={cn(
+                  "w-full h-48 object-cover rounded-lg",
+                  content.hasBorder && "border-2",
+                  content.hasShadow && "shadow-lg"
+                )}
+                style={{ width: `${content.width}%` }}
+              />
+            ) : (
+              <div className="w-full h-48 bg-muted/50 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <Image className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No image added</p>
+                </div>
+              </div>
+            )}
             {content.caption && (
               <p className="text-sm text-muted-foreground mt-2">{content.caption}</p>
             )}
@@ -519,12 +610,32 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
       case 'video-embed':
         return (
           <div className={cn(`text-${content.alignment}`)}>
-            <div className="aspect-video">
-              <iframe
-                src={content.videoUrl}
-                className="w-full h-full rounded-lg"
-                allowFullScreen
-              />
+            <div 
+              className="aspect-video mx-auto overflow-hidden rounded-lg shadow-lg"
+              style={{ width: `${content.width}%` }}
+            >
+              {content.videoUrl?.includes('youtube.com') || content.videoUrl?.includes('youtu.be') || content.videoUrl?.includes('vimeo.com') ? (
+                <iframe
+                  src={content.videoUrl}
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                />
+              ) : content.videoUrl ? (
+                <video
+                  src={content.videoUrl}
+                  className="w-full h-full object-cover"
+                  controls
+                  preload="metadata"
+                />
+              ) : (
+                <div className="w-full h-full bg-muted/50 flex items-center justify-center">
+                  <div className="text-center">
+                    <Video className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No video added</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
