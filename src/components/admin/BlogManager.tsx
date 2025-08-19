@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import EnhancedRichTextEditor from '@/components/ui/enhanced-rich-text-editor';
+import AdvancedRichTextEditor from '@/components/ui/advanced-rich-text-editor';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Plus, 
@@ -509,20 +509,17 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                          <div>
                            <Label htmlFor="content" className="text-base font-semibold mb-2 block">Content</Label>
                            <div className="border rounded-lg">
-                             <EnhancedRichTextEditor
-                               value={formData.content}
-                               onChange={(content) => {
-                                 setFormData({...formData, content});
-                                 if (editingBlog) {
-                                   autoSave(content);
-                                 }
-                               }}
-                               placeholder="Start writing your amazing blog content..."
-                               showWordCount={true}
-                               showPreview={true}
-                               autoSave={!!editingBlog}
-                               height="500px"
-                             />
+                              <AdvancedRichTextEditor
+                                value={formData.content}
+                                onChange={(content) => {
+                                  setFormData({...formData, content});
+                                  if (editingBlog) {
+                                    autoSave(content);
+                                  }
+                                }}
+                                placeholder="Start writing your amazing blog content..."
+                                height="500px"
+                              />
                            </div>
                          </div>
                        </div>
