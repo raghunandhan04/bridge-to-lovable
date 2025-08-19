@@ -47,7 +47,7 @@ interface Blog {
   featured_image_url: string;
   created_at: string;
   // Enhanced blog structure for new editor
-  blog_structure?: BlogStructure;
+  blog_structure?: any; // Use any to handle Supabase Json type
 }
 
 interface BlogManagerProps {
@@ -151,7 +151,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBlogs(data || []);
+      setBlogs((data || []) as Blog[]);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -214,11 +214,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       if (editorMode === 'visual') {
         const structuredData = {
           ...blogData,
-          blog_structure: {
-            ...blogStructure,
-            title: formData.title,
-            featuredImage: formData.featured_image_url
-          }
+          blog_structure: blogStructure as any // Cast to any for Supabase JSON compatibility
         };
         
         // Convert structure to HTML content for backward compatibility
@@ -308,7 +304,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     
     // Load structured data if available
     if (blog.blog_structure) {
-      setBlogStructure(blog.blog_structure);
+      setBlogStructure(blog.blog_structure as BlogStructure);
       setEditorMode('visual');
     } else {
       // Default to classic editor for old blogs

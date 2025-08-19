@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Download, Calendar, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { addFeaturedArticles } from '@/scripts/add-featured-articles';
+import BlogRenderer from '@/components/blog/BlogRenderer';
 
 interface Blog {
   id: string;
@@ -18,6 +19,7 @@ interface Blog {
   featured: boolean;
   featured_image_url: string;
   created_at: string;
+  blog_structure?: any; // Support for new visual editor
 }
 
 const DynamicBlog = () => {
@@ -165,39 +167,18 @@ const DynamicBlog = () => {
             </Button>
           </div>
           
-          <article className="prose prose-lg max-w-none">
-            {selectedBlog.featured_image_url && (
-              <img 
-                src={selectedBlog.featured_image_url} 
-                alt={selectedBlog.title}
-                className="w-full h-64 object-cover rounded-lg mb-6"
-              />
-            )}
-            
-            <header className="mb-8">
-              <h1 className="text-4xl font-bold mb-4">{selectedBlog.title}</h1>
-              <div className="flex items-center space-x-4 text-muted-foreground">
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {new Date(selectedBlog.created_at).toLocaleDateString()}
-                </div>
-                <Badge variant="secondary">{selectedBlog.category}</Badge>
-              </div>
-            </header>
-            
-            {selectedBlog.excerpt && (
-              <div className="text-xl text-muted-foreground mb-8 font-medium">
-                {selectedBlog.excerpt}
-              </div>
-            )}
-            
-            <div 
-              className="prose prose-lg max-w-none content"
-              dangerouslySetInnerHTML={{ 
-                __html: selectedBlog.content 
-              }}
-            />
-          </article>
+          <BlogRenderer 
+            blog={{
+              title: selectedBlog.title,
+              content: selectedBlog.content,
+              excerpt: selectedBlog.excerpt,
+              featured_image_url: selectedBlog.featured_image_url,
+              created_at: selectedBlog.created_at,
+              category: selectedBlog.category,
+              blog_structure: selectedBlog.blog_structure
+            }}
+            className="prose prose-lg max-w-none"
+          />
         </div>
       </div>
     );

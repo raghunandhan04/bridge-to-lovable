@@ -7,6 +7,7 @@ import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import BlogRenderer from "@/components/blog/BlogRenderer";
 
 interface Blog {
   id: string;
@@ -19,6 +20,7 @@ interface Blog {
   featured: boolean;
   featured_image_url: string;
   created_at: string;
+  blog_structure?: any; // Support for new visual editor
 }
 
 const Blog = () => {
@@ -211,11 +213,21 @@ const Blog = () => {
                     {selectedBlog.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 overflow-y-auto h-[calc(100vh-400px)]">
-                  <div 
-                    className="prose prose-lg max-w-none dark:prose-invert"
-                    dangerouslySetInnerHTML={{ __html: selectedBlog.content }}
-                  />
+                <CardContent className="p-0 overflow-y-auto h-[calc(100vh-400px)]">
+                  <div className="p-6">
+                    <BlogRenderer 
+                      blog={{
+                        title: selectedBlog.title,
+                        content: selectedBlog.content,
+                        excerpt: selectedBlog.excerpt,
+                        featured_image_url: selectedBlog.featured_image_url,
+                        created_at: selectedBlog.created_at,
+                        category: selectedBlog.category,
+                        blog_structure: selectedBlog.blog_structure
+                      }}
+                      className="max-w-none"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             ) : (

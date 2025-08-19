@@ -17,6 +17,7 @@ export type Database = {
       blogs: {
         Row: {
           author_id: string | null
+          blog_structure: Json | null
           category: string
           content: string
           created_at: string
@@ -31,6 +32,7 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
+          blog_structure?: Json | null
           category?: string
           content: string
           created_at?: string
@@ -45,6 +47,7 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
+          blog_structure?: Json | null
           category?: string
           content?: string
           created_at?: string
