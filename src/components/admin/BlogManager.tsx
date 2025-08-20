@@ -31,6 +31,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { DocumentUpload } from '@/components/ui/document-upload';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { migrateStaticBlogs } from '@/scripts/migrate-static-blogs';
 import { addFeaturedArticles } from '@/scripts/add-featured-articles';
@@ -84,7 +85,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     blocks: []
   });
   
-  const [editorMode, setEditorMode] = useState<'classic' | 'visual'>('visual');
+  const [editorMode, setEditorMode] = useState<'classic' | 'visual' | 'upload'>('visual');
   const { toast } = useToast();
   const [migrating, setMigrating] = useState(false);
   const [addingFeatured, setAddingFeatured] = useState(false);
@@ -285,7 +286,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       date: new Date().toISOString().split('T')[0],
       blocks: []
     });
-    setEditorMode('visual');
+    setEditorMode('upload');
   };
 
   const handleEdit = (blog: Blog) => {
@@ -670,64 +671,95 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                              </div>
                            </div>
 
-                           <div className="space-y-4">
-                             <div className="flex items-center gap-2 border-b pb-2">
-                               <Label className="text-base font-semibold">Content Editor</Label>
-                               <div className="flex gap-2">
-                                 <Button
-                                   variant={editorMode === 'classic' ? 'default' : 'outline'}
-                                   size="sm"
-                                   onClick={() => setEditorMode('classic')}
-                                 >
-                                   Classic
-                                 </Button>
-                                 <Button
-                                   variant={editorMode === 'visual' ? 'default' : 'outline'}
-                                   size="sm"
-                                   onClick={() => setEditorMode('visual')}
-                                 >
-                                   Visual
-                                 </Button>
-                               </div>
-                             </div>
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between border-b pb-2">
+                                <Label className="text-base font-semibold">Content Editor</Label>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant={editorMode === 'classic' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setEditorMode('classic')}
+                                  >
+                                    Classic
+                                  </Button>
+                                  <Button
+                                    variant={editorMode === 'visual' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setEditorMode('visual')}
+                                  >
+                                    Visual
+                                  </Button>
+                                  <Button
+                                    variant={editorMode === 'upload' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setEditorMode('upload')}
+                                  >
+                                    Upload Document
+                                  </Button>
+                                </div>
+                              </div>
 
-                             {editorMode === 'classic' ? (
-                               <div>
-                                 <div className="border rounded-lg">
-                                    <AdvancedRichTextEditor
-                                      value={formData.content}
-                                      onChange={(content) => {
-                                        setFormData({...formData, content});
-                                        if (editingBlog) {
-                                          autoSave(content);
-                                        }
-                                      }}
-                                      placeholder="Start writing your amazing blog content..."
-                                      height="500px"
-                                    />
-                                 </div>
-                               </div>
-                             ) : (
-                               <div>
-                                 <DragDropBlogEditor
-                                   value={{
-                                     ...blogStructure,
-                                     title: formData.title || blogStructure.title,
-                                     featuredImage: formData.featured_image_url
-                                   }}
-                                   onChange={(structure) => {
-                                     setBlogStructure(structure);
-                                     // Sync the title back to formData to enable Create Post button
-                                     setFormData(prev => ({
-                                       ...prev,
-                                       title: structure.title,
-                                       featured_image_url: structure.featuredImage
-                                     }));
-                                   }}
-                                   className="min-h-[600px] border rounded-lg"
-                                 />
-                               </div>
-                             )}
+                              {editorMode === 'classic' ? (
+                                <div>
+                                  <div className="border rounded-lg">
+                                     <AdvancedRichTextEditor
+                                       value={formData.content}
+                                       onChange={(content) => {
+                                         setFormData({...formData, content});
+                                         if (editingBlog) {
+                                           autoSave(content);
+                                         }
+                                       }}
+                                       placeholder="Start writing your amazing blog content..."
+                                       height="500px"
+                                     />
+                                  </div>
+                                </div>
+                              ) : editorMode === 'visual' ? (
+                                <div>
+                                  <DragDropBlogEditor
+                                    value={{
+                                      ...blogStructure,
+                                      title: formData.title || blogStructure.title,
+                                      featuredImage: formData.featured_image_url
+                                    }}
+                                    onChange={(structure) => {
+                                      setBlogStructure(structure);
+                                      // Sync the title back to formData to enable Create Post button
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        title: structure.title,
+                                        featured_image_url: structure.featuredImage
+                                      }));
+                                    }}
+                                    className="min-h-[600px] border rounded-lg"
+                                  />
+                                </div>
+                              ) : (
+                                <div>
+                                  <DocumentUpload
+                                    onDocumentParsed={(data) => {
+                                      // Update form data with parsed document data
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        title: data.title,
+                                        content: data.content,
+                                        excerpt: data.excerpt,
+                                        slug: generateSlug(data.title)
+                                      }));
+                                      
+                                      // Switch to classic editor to show the parsed content
+                                      setEditorMode('classic');
+                                      
+                                      toast({
+                                        title: "Document uploaded successfully",
+                                        description: "Your document has been parsed and loaded. You can now edit it using the Classic editor.",
+                                      });
+                                    }}
+                                    className="min-h-[400px]"
+                                  />
+                                </div>
+                              )}
                            </div>
                          </div>
 
