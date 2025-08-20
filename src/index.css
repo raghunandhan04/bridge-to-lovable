@@ -299,7 +299,7 @@
   }
 
   .image-card {
-    @apply transition-all duration-400 ease-out hover:scale-102 hover:shadow-card hover:brightness-105 rounded-md overflow-hidden;
+    @apply transition-all duration-300 ease-out hover:scale-105 hover:shadow-card hover:brightness-105 rounded-md overflow-hidden;
   }
 
   .image-zoom {
