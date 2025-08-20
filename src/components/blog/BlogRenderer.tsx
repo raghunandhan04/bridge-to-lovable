@@ -22,9 +22,9 @@ const BlogRenderer: React.FC<BlogRendererProps> = ({ blog, className }) => {
     const { content } = block;
 
     const commonImageClasses = cn(
-      "rounded-lg transition-all duration-300",
+      "rounded-lg transition-all duration-500 ease-out hover:scale-105 hover:shadow-glow hover:brightness-110",
       content.hasBorder && "border-2 border-border",
-      content.hasShadow && "shadow-lg hover:shadow-xl"
+      content.hasShadow && "shadow-lg hover:shadow-xl cursor-pointer overflow-hidden"  
     );
 
     const commonTextClasses = cn(
@@ -390,7 +390,7 @@ const BlogRenderer: React.FC<BlogRendererProps> = ({ blog, className }) => {
               <img 
                 src={blog.blog_structure.featuredImage}
                 alt={blog.blog_structure.title}
-                className="w-full h-80 object-cover rounded-xl shadow-2xl"
+                className="w-full h-80 object-cover image-hero"
               />
             </div>
           )}
@@ -446,7 +446,7 @@ const BlogRenderer: React.FC<BlogRendererProps> = ({ blog, className }) => {
             <img 
               src={blog.featured_image_url}
               alt={blog.title}
-              className="w-full h-80 object-cover rounded-xl shadow-2xl"
+              className="w-full h-80 object-cover image-hero"
             />
           </div>
         )}

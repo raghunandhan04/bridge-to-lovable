@@ -632,7 +632,7 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
                       <iframe src={formData.image_url} className="w-full h-full rounded" />
                     </div>
                   ) : (
-                    <img src={formData.image_url} alt="Preview" className="w-full max-w-xs h-32 object-cover rounded" />
+                    <img src={formData.image_url} alt="Preview" className="w-full max-w-xs h-32 object-cover image-card" />
                   )}
                 </div>
               )}
@@ -744,7 +744,7 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
                 <p className="text-sm text-muted-foreground line-clamp-2">{section.content}</p>
                 {section.image_url && (
                   <div className="mt-3">
-                    <img src={section.image_url} alt={section.title} className="w-20 h-20 object-cover rounded border" />
+                    <img src={section.image_url} alt={section.title} className="w-20 h-20 object-cover image-card" />
                   </div>
                 )}
                 <div className="flex items-center gap-2 mt-3">

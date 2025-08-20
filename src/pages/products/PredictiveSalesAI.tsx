@@ -47,7 +47,7 @@ const PredictiveSalesAI = () => {
                     <img 
                       src={predictiveSalesHero} 
                       alt="Predictive Sales AI Analytics Dashboard" 
-                      className="w-full h-auto rounded-xl shadow-lg"
+                      className="w-full h-auto image-hero"
                     />
                   </div>
                 </div>

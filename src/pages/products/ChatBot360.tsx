@@ -47,7 +47,7 @@ const ChatBot360 = () => {
                     <img 
                       src={chatbotHero} 
                       alt="ChatBot360 Interface" 
-                      className="w-full h-auto rounded-xl shadow-lg"
+                      className="w-full h-auto image-hero"
                     />
                   </div>
                 </div>

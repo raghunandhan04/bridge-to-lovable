@@ -47,7 +47,7 @@ const SmartCRM = () => {
                     <img 
                       src={smartCrmHero} 
                       alt="SmartCRM Dashboard Interface" 
-                      className="w-full h-auto rounded-xl shadow-lg"
+                      className="w-full h-auto image-hero"
                     />
                   </div>
                 </div>

@@ -46,7 +46,7 @@ const DataIntelligenceHub = () => {
                     <img 
                       src={dataIntelligenceHero} 
                       alt="Data Intelligence Hub Analytics Platform" 
-                      className="w-full h-auto rounded-xl shadow-lg"
+                      className="w-full h-auto image-hero"
                     />
                   </div>
                 </div>

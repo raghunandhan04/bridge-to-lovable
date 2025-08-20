@@ -288,4 +288,25 @@
   .text-hero {
     @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
   }
+
+  /* Image Animation Classes */
+  .image-hover {
+    @apply transition-all duration-500 ease-out hover:scale-105 hover:shadow-glow rounded-lg overflow-hidden;
+  }
+
+  .image-hero {
+    @apply transition-all duration-700 ease-out hover:scale-110 hover:shadow-elegant hover:brightness-110 rounded-xl overflow-hidden;
+  }
+
+  .image-card {
+    @apply transition-all duration-400 ease-out hover:scale-102 hover:shadow-card hover:brightness-105 rounded-md overflow-hidden;
+  }
+
+  .image-zoom {
+    @apply transition-all duration-600 ease-out hover:scale-125 hover:shadow-glow cursor-pointer rounded-lg overflow-hidden;
+  }
+
+  .image-float {
+    @apply transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-elegant hover:scale-105 rounded-lg overflow-hidden;
+  }
 }

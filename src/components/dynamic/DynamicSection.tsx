@@ -116,7 +116,7 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
                         />
                       </div>
                     ) : (
-                      <img src={section.image_url} alt={section.title} className="mx-auto max-w-full h-auto rounded-lg shadow-2xl" />
+                      <img src={section.image_url} alt={section.title} className="mx-auto max-w-full h-auto image-hero" />
                     )}
                   </div>
                 )}
@@ -147,7 +147,7 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
               </div>
               {section.image_url && (
                 <div className="flex justify-center mb-8">
-                  <img src={section.image_url} alt={section.title} className="max-w-full h-auto rounded-lg shadow-lg" />
+                  <img src={section.image_url} alt={section.title} className="max-w-full h-auto image-float" />
                 </div>
               )}
               {section.data?.features && (
@@ -221,7 +221,7 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
                 )}
                 {section.image_url && (
                   <div className="mt-8">
-                    <img src={section.image_url} alt={section.title} className="w-full max-w-2xl mx-auto rounded-lg shadow-lg" />
+                    <img src={section.image_url} alt={section.title} className="w-full max-w-2xl mx-auto image-hover" />
                   </div>
                 )}
               </div>
@@ -243,7 +243,7 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
                     <Card key={index} className="p-6">
                       <p className="text-lg mb-4">"{testimonial.content}"</p>
                       <div className="flex items-center gap-3">
-                        {testimonial.avatar && <img src={testimonial.avatar} alt={testimonial.name} className="w-10 h-10 rounded-full" />}
+                        {testimonial.avatar && <img src={testimonial.avatar} alt={testimonial.name} className="w-10 h-10 rounded-full image-card" />}
                         <div>
                           <p className="font-semibold">{testimonial.name}</p>
                           <p className="text-sm text-muted-foreground">{testimonial.role}</p>
@@ -341,7 +341,7 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
               <h3 className="text-2xl font-bold">{section.title}</h3>
               <p className="text-muted-foreground leading-relaxed">{section.content}</p>
               {section.image_url && (
-                <img src={section.image_url} alt={section.title} className="w-full h-48 object-cover rounded-lg" />
+                <img src={section.image_url} alt={section.title} className="w-full h-48 object-cover image-card" />
               )}
               {section.data && section.data.features && (
                 <ul className="space-y-2">
@@ -361,7 +361,7 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
         return (
           <div className={`${className}`}>
             {section.image_url && (
-              <img src={section.image_url} alt={section.title} className="w-full h-auto rounded-lg shadow-lg" />
+              <img src={section.image_url} alt={section.title} className="w-full h-auto image-hover" />
             )}
             {section.title && <h3 className="text-xl font-semibold mt-4">{section.title}</h3>}
             {section.content && <p className="text-muted-foreground mt-2">{section.content}</p>}
@@ -381,7 +381,7 @@ export const DynamicSection: React.FC<DynamicSectionProps> = ({ section, classNa
               </div>
             )}
             {section.image_url && (
-              <img src={section.image_url} alt={section.title} className="w-full h-auto rounded-lg shadow-lg" />
+              <img src={section.image_url} alt={section.title} className="w-full h-auto image-hover" />
             )}
           </div>
         );
