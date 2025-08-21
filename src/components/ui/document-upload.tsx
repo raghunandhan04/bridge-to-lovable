@@ -4,16 +4,11 @@ import { Card } from './card';
 import { Progress } from './progress';
 import { Alert, AlertDescription } from './alert';
 import { Upload, FileText, File, CheckCircle, AlertCircle } from 'lucide-react';
-import { DocumentParser } from '@/utils/documentParser';
+import { DocumentParser, StandardizedBlog } from '@/utils/documentParser';
 import { useToast } from '@/hooks/use-toast';
 
 interface DocumentUploadProps {
-  onDocumentParsed: (data: {
-    title: string;
-    content: string;
-    excerpt: string;
-    images: string[];
-  }) => void;
+  onDocumentParsed: (document: StandardizedBlog) => void;
   className?: string;
 }
 
@@ -71,7 +66,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         });
       }, 200);
 
-      let parsedDocument;
+      let parsedDocument: StandardizedBlog;
       
       if (file.type.includes('pdf')) {
         parsedDocument = await DocumentParser.parsePdfDocument(file);
@@ -86,8 +81,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       onDocumentParsed(parsedDocument);
 
       toast({
-        title: "Document uploaded successfully",
-        description: `Your ${file.type.includes('pdf') ? 'PDF' : 'Word'} document has been parsed and loaded into the editor.`,
+        title: "Document standardized successfully",
+        description: `Your ${file.type.includes('pdf') ? 'PDF' : 'Word'} document has been converted into ${parsedDocument.blocks.length} structured blocks with consistent formatting.`,
       });
 
     } catch (error) {
@@ -157,7 +152,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium">Parsing document...</p>
+                <p className="text-sm font-medium">Standardizing document...</p>
                 <Progress value={uploadProgress} className="w-full max-w-xs mx-auto" />
                 <p className="text-xs text-muted-foreground">{uploadProgress}% complete</p>
               </div>
@@ -190,8 +185,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       <Alert className="mt-4">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>Auto-formatting:</strong> We'll extract headings, paragraphs, lists, and images from your document. 
-          You can edit the content after upload to refine formatting and styling.
+          <strong>Auto-standardization:</strong> We'll extract and standardize your document content into consistent blocks with unified formatting, fonts, and layouts. Any mixed styles will be converted to our blog's standard structure.
         </AlertDescription>
       </Alert>
     </div>

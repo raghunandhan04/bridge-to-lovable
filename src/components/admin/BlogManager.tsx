@@ -738,22 +738,31 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                               ) : (
                                 <div>
                                   <DocumentUpload
-                                    onDocumentParsed={(data) => {
+                                    onDocumentParsed={(document) => {
                                       // Update form data with parsed document data
                                       setFormData(prev => ({
                                         ...prev,
-                                        title: data.title,
-                                        content: data.content,
-                                        excerpt: data.excerpt,
-                                        slug: generateSlug(data.title)
+                                        title: document.title,
+                                        excerpt: document.excerpt,
+                                        slug: generateSlug(document.title),
+                                        featured_image_url: document.featuredImage
                                       }));
                                       
-                                      // Switch to classic editor to show the parsed content
-                                      setEditorMode('classic');
+                                      // Set the structured content in the visual editor
+                                      setBlogStructure({
+                                        title: document.title,
+                                        featuredImage: document.featuredImage,
+                                        author: document.author,
+                                        date: document.date,
+                                        blocks: document.blocks
+                                      });
+                                      
+                                      // Switch to visual editor to show the standardized content
+                                      setEditorMode('visual');
                                       
                                       toast({
-                                        title: "Document uploaded successfully",
-                                        description: "Your document has been parsed and loaded. You can now edit it using the Classic editor.",
+                                        title: "Document standardized successfully",
+                                        description: `Converted "${document.title}" into ${document.blocks.length} structured blocks with consistent formatting. You can now edit using the Visual editor.`,
                                       });
                                     }}
                                     className="min-h-[400px]"

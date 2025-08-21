@@ -1,10 +1,42 @@
 import mammoth from 'mammoth';
 
-interface ParsedDocument {
+// Import the blog structure interfaces
+export interface ContentBlock {
+  id: string;
+  type: 'left-image-right-text' | 'right-image-left-text' | 'full-width-image' | 'full-width-text' | 'image-caption' | 'video-embed' | 'table' | 'chart';
+  content: {
+    title?: string;
+    text?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    caption?: string;
+    width?: number;
+    alignment?: 'left' | 'center' | 'right';
+    hasBorder?: boolean;
+    hasShadow?: boolean;
+    fontSize?: 'sm' | 'base' | 'lg' | 'xl';
+    fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
+    textColor?: string;
+    tableData?: {
+      headers: string[];
+      rows: string[][];
+    };
+    chartData?: {
+      type: 'pie' | 'bar' | 'line';
+      labels: string[];
+      data: number[];
+      title: string;
+    };
+  };
+}
+
+export interface StandardizedBlog {
   title: string;
-  content: string;
+  featuredImage: string;
+  author: string;
+  date: string;
+  blocks: ContentBlock[];
   excerpt: string;
-  images: string[];
 }
 
 interface DocumentBlock {
@@ -15,19 +47,19 @@ interface DocumentBlock {
 }
 
 export class DocumentParser {
-  static async parseWordDocument(file: File): Promise<ParsedDocument> {
+  static async parseWordDocument(file: File): Promise<StandardizedBlog> {
     try {
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ arrayBuffer });
       
-      return this.parseHtmlContent(result.value);
+      return this.parseHtmlContentToBlocks(result.value, file.name);
     } catch (error) {
       console.error('Error parsing Word document:', error);
       throw new Error('Failed to parse Word document');
     }
   }
 
-  static async parsePdfDocument(file: File): Promise<ParsedDocument> {
+  static async parsePdfDocument(file: File): Promise<StandardizedBlog> {
     try {
       // For PDF parsing, we'll use a simple text extraction approach
       // In a production environment, you might want to use a more sophisticated PDF parser
@@ -37,7 +69,7 @@ export class DocumentParser {
       // Simple PDF text extraction (basic implementation)
       const text = await this.extractTextFromPdf(uint8Array);
       
-      return this.parseTextContent(text);
+      return this.parseTextContentToBlocks(text, file.name);
     } catch (error) {
       console.error('Error parsing PDF document:', error);
       throw new Error('Failed to parse PDF document');
@@ -59,19 +91,24 @@ export class DocumentParser {
     return text;
   }
 
-  private static parseHtmlContent(html: string): ParsedDocument {
+  private static parseHtmlContentToBlocks(html: string, fileName: string): StandardizedBlog {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     
-    const blocks: DocumentBlock[] = [];
-    const images: string[] = [];
+    const rawBlocks: DocumentBlock[] = [];
+    const extractedImages: string[] = [];
     
     // Extract title (first h1 or strong text)
     const titleElement = doc.querySelector('h1, h2, h3, strong');
-    const title = titleElement?.textContent?.trim() || 'Untitled Document';
+    const title = titleElement?.textContent?.trim() || fileName.replace(/\.[^/.]+$/, '') || 'Untitled Document';
     
-    // Process all elements
-    const elements = doc.body.querySelectorAll('*');
+    // Process all elements sequentially to maintain order
+    const elements = Array.from(doc.body.querySelectorAll('*')).filter(el => {
+      // Only include direct content elements, not nested ones
+      const parent = el.parentElement;
+      return !parent || ['body', 'div', 'article', 'section'].includes(parent.tagName.toLowerCase());
+    });
+
     elements.forEach((element) => {
       const tagName = element.tagName.toLowerCase();
       const content = element.textContent?.trim() || '';
@@ -80,64 +117,60 @@ export class DocumentParser {
       
       switch (tagName) {
         case 'h1':
-          blocks.push({ type: 'heading', level: 1, content });
-          break;
         case 'h2':
-          blocks.push({ type: 'heading', level: 2, content });
-          break;
         case 'h3':
-          blocks.push({ type: 'heading', level: 3, content });
-          break;
         case 'h4':
-          blocks.push({ type: 'heading', level: 4, content });
-          break;
         case 'h5':
-          blocks.push({ type: 'heading', level: 5, content });
-          break;
         case 'h6':
-          blocks.push({ type: 'heading', level: 6, content });
+          if (content.length > 0) {
+            const level = parseInt(tagName.charAt(1));
+            rawBlocks.push({ type: 'heading', level, content });
+          }
           break;
         case 'p':
           if (content.length > 0) {
-            blocks.push({ type: 'paragraph', content });
+            rawBlocks.push({ type: 'paragraph', content });
           }
           break;
         case 'ul':
         case 'ol':
           const listItems = Array.from(element.querySelectorAll('li')).map(li => li.textContent?.trim() || '');
           if (listItems.length > 0) {
-            blocks.push({ type: 'list', content: tagName, items: listItems });
+            rawBlocks.push({ type: 'list', content: tagName, items: listItems });
           }
           break;
         case 'img':
           const src = element.getAttribute('src');
           if (src) {
-            images.push(src);
-            blocks.push({ type: 'image', content: src });
+            extractedImages.push(src);
+            rawBlocks.push({ type: 'image', content: src });
           }
           break;
         case 'table':
-          blocks.push({ type: 'table', content: element.outerHTML });
+          rawBlocks.push({ type: 'table', content: element.outerHTML });
           break;
       }
     });
     
-    const richContent = this.convertBlocksToRichText(blocks);
-    const excerpt = this.generateExcerpt(blocks);
+    // Convert to standardized blog blocks
+    const standardizedBlocks = this.convertToStandardizedBlocks(rawBlocks);
+    const excerpt = this.generateExcerptFromBlocks(standardizedBlocks);
     
     return {
       title,
-      content: richContent,
-      excerpt,
-      images
+      featuredImage: extractedImages[0] || '',
+      author: 'Document Upload',
+      date: new Date().toISOString(),
+      blocks: standardizedBlocks,
+      excerpt
     };
   }
 
-  private static parseTextContent(text: string): ParsedDocument {
+  private static parseTextContentToBlocks(text: string, fileName: string): StandardizedBlog {
     const lines = text.split('\n').filter(line => line.trim().length > 0);
-    const blocks: DocumentBlock[] = [];
+    const rawBlocks: DocumentBlock[] = [];
     
-    let title = 'Untitled Document';
+    let title = fileName.replace(/\.[^/.]+$/, '') || 'Untitled Document';
     let foundTitle = false;
     
     for (const line of lines) {
@@ -146,78 +179,189 @@ export class DocumentParser {
       if (!foundTitle && trimmedLine.length > 0) {
         title = trimmedLine;
         foundTitle = true;
-        blocks.push({ type: 'heading', level: 1, content: trimmedLine });
+        rawBlocks.push({ type: 'heading', level: 1, content: trimmedLine });
         continue;
       }
       
-      // Detect headings (lines that are shorter and followed by longer content)
-      if (trimmedLine.length < 100 && !trimmedLine.endsWith('.')) {
-        blocks.push({ type: 'heading', level: 2, content: trimmedLine });
+      // Detect headings (lines that are shorter and don't end with punctuation)
+      if (trimmedLine.length < 100 && !trimmedLine.match(/[.!?]$/)) {
+        rawBlocks.push({ type: 'heading', level: 2, content: trimmedLine });
       } else if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.match(/^\d+\./)) {
         // List items
         const content = trimmedLine.replace(/^[•\-\d+\.]\s*/, '');
-        blocks.push({ type: 'list', content: 'ul', items: [content] });
+        rawBlocks.push({ type: 'list', content: 'ul', items: [content] });
       } else {
-        blocks.push({ type: 'paragraph', content: trimmedLine });
+        rawBlocks.push({ type: 'paragraph', content: trimmedLine });
       }
     }
     
-    const richContent = this.convertBlocksToRichText(blocks);
-    const excerpt = this.generateExcerpt(blocks);
+    // Convert to standardized blog blocks
+    const standardizedBlocks = this.convertToStandardizedBlocks(rawBlocks);
+    const excerpt = this.generateExcerptFromBlocks(standardizedBlocks);
     
     return {
       title,
-      content: richContent,
-      excerpt,
-      images: []
+      featuredImage: '',
+      author: 'Document Upload',
+      date: new Date().toISOString(),
+      blocks: standardizedBlocks,
+      excerpt
     };
   }
 
-  private static convertBlocksToRichText(blocks: DocumentBlock[]): string {
-    let html = '';
-    let imageAlign = 'left'; // Alternating image alignment
+  private static convertToStandardizedBlocks(rawBlocks: DocumentBlock[]): ContentBlock[] {
+    const standardizedBlocks: ContentBlock[] = [];
+    let imageLayoutToggle = true; // Alternates between left-right and right-left layouts
+    let blockId = 1;
     
-    for (const block of blocks) {
+    for (let i = 0; i < rawBlocks.length; i++) {
+      const block = rawBlocks[i];
+      const nextBlock = rawBlocks[i + 1];
+      
       switch (block.type) {
         case 'heading':
-          const level = block.level || 2;
-          html += `<h${level}>${block.content}</h${level}>`;
-          break;
-        case 'paragraph':
-          html += `<p>${block.content}</p>`;
-          break;
-        case 'list':
-          if (block.items && block.items.length > 0) {
-            const listType = block.content === 'ol' ? 'ol' : 'ul';
-            html += `<${listType}>`;
-            for (const item of block.items) {
-              html += `<li>${item}</li>`;
+          // Convert headings to full-width text blocks with appropriate styling
+          const fontSize = block.level === 1 ? 'xl' : block.level === 2 ? 'lg' : 'base';
+          const fontWeight = block.level <= 2 ? 'bold' : 'semibold';
+          
+          standardizedBlocks.push({
+            id: `block-${blockId++}`,
+            type: 'full-width-text',
+            content: {
+              text: block.content,
+              alignment: 'left',
+              fontSize,
+              fontWeight,
+              textColor: 'hsl(var(--foreground))',
+              width: 100
             }
-            html += `</${listType}>`;
+          });
+          break;
+          
+        case 'paragraph':
+          // Check if next block is an image - if so, create combined layout
+          if (nextBlock && nextBlock.type === 'image') {
+            const layoutType = imageLayoutToggle ? 'left-image-right-text' : 'right-image-left-text';
+            imageLayoutToggle = !imageLayoutToggle;
+            
+            standardizedBlocks.push({
+              id: `block-${blockId++}`,
+              type: layoutType,
+              content: {
+                text: block.content,
+                imageUrl: nextBlock.content,
+                alignment: 'left',
+                fontSize: 'base',
+                fontWeight: 'normal',
+                textColor: 'hsl(var(--foreground))',
+                width: 100,
+                hasShadow: true
+              }
+            });
+            i++; // Skip the next image block since we've processed it
+          } else {
+            // Standalone text block
+            standardizedBlocks.push({
+              id: `block-${blockId++}`,
+              type: 'full-width-text',
+              content: {
+                text: block.content,
+                alignment: 'left',
+                fontSize: 'base',
+                fontWeight: 'normal',
+                textColor: 'hsl(var(--foreground))',
+                width: 100
+              }
+            });
           }
           break;
+          
         case 'image':
-          html += `<div class="image-container" style="text-align: ${imageAlign};">`;
-          html += `<img src="${block.content}" alt="Document image" style="max-width: 100%; height: auto;" />`;
-          html += `</div>`;
-          imageAlign = imageAlign === 'left' ? 'right' : 'left';
+          // Standalone image with caption
+          standardizedBlocks.push({
+            id: `block-${blockId++}`,
+            type: 'image-caption',
+            content: {
+              imageUrl: block.content,
+              caption: 'Uploaded image',
+              alignment: 'center',
+              width: 80,
+              hasShadow: true,
+              hasBorder: false
+            }
+          });
           break;
+          
+        case 'list':
+          // Convert lists to formatted text blocks
+          let listText = '';
+          if (block.items) {
+            const listType = block.content === 'ol' ? 'numbered' : 'bullet';
+            listText = block.items.map((item, index) => {
+              const prefix = listType === 'numbered' ? `${index + 1}. ` : '• ';
+              return `${prefix}${item}`;
+            }).join('\n');
+          }
+          
+          standardizedBlocks.push({
+            id: `block-${blockId++}`,
+            type: 'full-width-text',
+            content: {
+              text: listText,
+              alignment: 'left',
+              fontSize: 'base',
+              fontWeight: 'normal',
+              textColor: 'hsl(var(--foreground))',
+              width: 100
+            }
+          });
+          break;
+          
         case 'table':
-          html += block.content;
+          // Parse table HTML and convert to table block
+          const parser = new DOMParser();
+          const tableDoc = parser.parseFromString(block.content, 'text/html');
+          const tableElement = tableDoc.querySelector('table');
+          
+          if (tableElement) {
+            const headers = Array.from(tableElement.querySelectorAll('th')).map(th => th.textContent?.trim() || '');
+            const rows = Array.from(tableElement.querySelectorAll('tr')).slice(headers.length > 0 ? 1 : 0).map(tr => 
+              Array.from(tr.querySelectorAll('td')).map(td => td.textContent?.trim() || '')
+            );
+            
+            if (headers.length > 0 || rows.length > 0) {
+              standardizedBlocks.push({
+                id: `block-${blockId++}`,
+                type: 'table',
+                content: {
+                  tableData: {
+                    headers: headers.length > 0 ? headers : ['Column 1', 'Column 2', 'Column 3'],
+                    rows: rows.length > 0 ? rows : [['Data 1', 'Data 2', 'Data 3']]
+                  },
+                  width: 100,
+                  alignment: 'center'
+                }
+              });
+            }
+          }
           break;
       }
     }
     
-    return html;
+    return standardizedBlocks;
   }
 
-  private static generateExcerpt(blocks: DocumentBlock[]): string {
-    const paragraphBlocks = blocks.filter(block => block.type === 'paragraph');
-    if (paragraphBlocks.length === 0) return '';
+  private static generateExcerptFromBlocks(blocks: ContentBlock[]): string {
+    // Find the first text block
+    const textBlock = blocks.find(block => 
+      block.content.text && 
+      block.content.text.length > 0 &&
+      !block.content.text.match(/^(#|##|###)/) // Skip headings
+    );
     
-    const firstParagraph = paragraphBlocks[0].content;
-    return firstParagraph.length > 160 
-      ? firstParagraph.substring(0, 157) + '...'
-      : firstParagraph;
+    if (!textBlock || !textBlock.content.text) return '';
+    
+    const text = textBlock.content.text;
+    return text.length > 160 ? text.substring(0, 157) + '...' : text;
   }
 }
