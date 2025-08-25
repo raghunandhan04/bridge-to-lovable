@@ -29,6 +29,10 @@ import RetailEcommerce from "./pages/solutions/RetailEcommerce";
 import Healthcare from "./pages/solutions/Healthcare";
 import LogisticsSupplyChain from "./pages/solutions/LogisticsSupplyChain";
 import FinancialServices from "./pages/solutions/FinancialServices";
+import MarketingAutomation from "./pages/solutions/MarketingAutomation";
+import SalesEnhancement from "./pages/solutions/SalesEnhancement";
+import CustomerSupport from "./pages/solutions/CustomerSupport";
+import OperationsOptimization from "./pages/solutions/OperationsOptimization";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +67,10 @@ const App = () => (
             <Route path="/solutions/healthcare" element={<Healthcare />} />
             <Route path="/solutions/logistics-supply-chain" element={<LogisticsSupplyChain />} />
             <Route path="/solutions/financial-services" element={<FinancialServices />} />
+            <Route path="/solutions/marketing-automation" element={<MarketingAutomation />} />
+            <Route path="/solutions/sales-enhancement" element={<SalesEnhancement />} />
+            <Route path="/solutions/customer-support" element={<CustomerSupport />} />
+            <Route path="/solutions/operations-optimization" element={<OperationsOptimization />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

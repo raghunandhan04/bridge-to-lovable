@@ -215,26 +215,45 @@ const Solutions = () => {
             
             {openCategory === "usecase" && (
               <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in slide-in-from-top-4 duration-300">
-                {useCases.map((useCase, index) => (
-                  <Card key={index} className="card-gradient p-6 hover:scale-[1.02] transition-all duration-300">
-                    <div className="flex items-start space-x-4">
-                      <div className={`w-14 h-14 bg-gradient-to-r ${useCase.color} rounded-xl flex items-center justify-center`}>
-                        <useCase.icon className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">{useCase.name}</h3>
-                        <p className="text-muted-foreground mb-4 text-sm leading-relaxed">{useCase.description}</p>
-                        <div className="space-y-2">
-                          {useCase.solutions.map((solution, idx) => (
-                            <Badge key={idx} variant="secondary" className="mr-2 mb-1">
-                              {solution}
-                            </Badge>
-                          ))}
+                {useCases.map((useCase, index) => {
+                  const getRouteForUseCase = (name: string) => {
+                    switch (name) {
+                      case "Marketing Automation":
+                        return "/solutions/marketing-automation";
+                      case "Sales Enhancement":
+                        return "/solutions/sales-enhancement";
+                      case "Operations Optimization":
+                        return "/solutions/operations-optimization";
+                      case "Customer Support":
+                        return "/solutions/customer-support";
+                      default:
+                        return `/solutions/${name.toLowerCase().replace(/\s+/g, '-')}`;
+                    }
+                  };
+                  
+                  return (
+                    <Link key={index} to={getRouteForUseCase(useCase.name)}>
+                      <Card className="card-gradient p-6 hover:scale-[1.02] transition-all duration-300 cursor-pointer">
+                        <div className="flex items-start space-x-4">
+                          <div className={`w-14 h-14 bg-gradient-to-r ${useCase.color} rounded-xl flex items-center justify-center`}>
+                            <useCase.icon className="w-7 h-7 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold mb-2">{useCase.name}</h3>
+                            <p className="text-muted-foreground mb-4 text-sm leading-relaxed">{useCase.description}</p>
+                            <div className="space-y-2">
+                              {useCase.solutions.map((solution, idx) => (
+                                <Badge key={idx} variant="secondary" className="mr-2 mb-1">
+                                  {solution}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </Card>
