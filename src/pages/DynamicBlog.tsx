@@ -106,34 +106,157 @@ const DynamicBlog = () => {
   };
 
   const handleDownloadPDF = (blog: Blog) => {
-    // Simple PDF generation using browser print
     const printWindow = window.open('', '_blank');
     if (printWindow) {
+      // Generate content HTML based on blog structure
+      let contentHtml = '';
+      
+      if (blog.blog_structure && blog.blog_structure.blocks && blog.blog_structure.blocks.length > 0) {
+        // Render structured content
+        blog.blog_structure.blocks.forEach(block => {
+          switch (block.type) {
+            case 'hero':
+            case 'full-width-text':
+              contentHtml += `<div style="margin-bottom: 20px;">
+                <p style="line-height: 1.6; font-size: 16px;">${block.content?.text || ''}</p>
+              </div>`;
+              break;
+            case 'left-image-right-text':
+            case 'right-image-left-text':
+              contentHtml += `<div style="margin-bottom: 30px; display: flex; align-items: flex-start; gap: 20px;">
+                ${block.content?.image_url ? `<img src="${block.content.image_url}" alt="${block.content?.image_alt || ''}" style="max-width: 300px; height: auto; object-fit: cover; border-radius: 8px;" />` : ''}
+                <div style="flex: 1;">
+                  <p style="line-height: 1.6; font-size: 16px;">${block.content?.text || ''}</p>
+                </div>
+              </div>`;
+              break;
+            case 'image-caption':
+              if (block.content?.image_url) {
+                contentHtml += `<div style="margin-bottom: 30px; text-align: center;">
+                  <img src="${block.content.image_url}" alt="${block.content?.image_alt || ''}" style="max-width: 100%; height: auto; border-radius: 8px;" />
+                  ${block.content?.caption ? `<p style="margin-top: 10px; font-style: italic; color: #666; font-size: 14px;">${block.content.caption}</p>` : ''}
+                </div>`;
+              }
+              break;
+            case 'bullet-points':
+              if (block.content?.points && block.content.points.length > 0) {
+                contentHtml += `<div style="margin-bottom: 20px;">
+                  <ul style="padding-left: 20px;">
+                    ${block.content.points.map(point => `<li style="margin-bottom: 8px; line-height: 1.6;">${point}</li>`).join('')}
+                  </ul>
+                </div>`;
+              }
+              break;
+            case 'table':
+              if (block.content?.table_data) {
+                contentHtml += `<div style="margin-bottom: 30px; overflow-x: auto;">
+                  <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+                    ${block.content.table_data.map((row, i) => 
+                      `<tr>${row.map(cell => 
+                        `<${i === 0 ? 'th' : 'td'} style="padding: 12px; border: 1px solid #ddd; text-align: left; ${i === 0 ? 'background-color: #f5f5f5; font-weight: bold;' : ''}">${cell}</${i === 0 ? 'th' : 'td'}>`
+                      ).join('')}</tr>`
+                    ).join('')}
+                  </table>
+                </div>`;
+              }
+              break;
+          }
+        });
+      } else {
+        // Fallback to regular content
+        contentHtml = `<div style="line-height: 1.6;">${blog.content.replace(/\n/g, '<br>')}</div>`;
+      }
+
       printWindow.document.write(`
         <html>
           <head>
             <title>${blog.title}</title>
+            <meta charset="utf-8">
             <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              h1 { color: #333; }
-              .meta { color: #666; margin-bottom: 20px; }
-              .content { line-height: 1.6; }
+              @media print {
+                body { -webkit-print-color-adjust: exact; color-adjust: exact; }
+                img { max-width: 100% !important; height: auto !important; }
+              }
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                padding: 40px; 
+                max-width: 800px; 
+                margin: 0 auto;
+                line-height: 1.6;
+                color: #333;
+              }
+              h1 { 
+                color: #1a1a1a; 
+                font-size: 32px; 
+                margin-bottom: 10px;
+                font-weight: 700;
+              }
+              .meta { 
+                color: #666; 
+                margin-bottom: 30px; 
+                padding-bottom: 20px;
+                border-bottom: 2px solid #eee;
+                font-size: 14px;
+              }
+              .meta p { margin: 5px 0; }
+              .excerpt {
+                font-size: 18px;
+                color: #555;
+                font-style: italic;
+                margin-bottom: 30px;
+                padding: 20px;
+                background-color: #f9f9f9;
+                border-left: 4px solid #007acc;
+              }
+              .featured-image {
+                margin-bottom: 30px;
+                text-align: center;
+              }
+              .featured-image img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+              }
+              .content { 
+                font-size: 16px;
+                line-height: 1.8;
+              }
+              .content p { margin-bottom: 16px; }
+              .content h2, .content h3 { 
+                margin-top: 30px; 
+                margin-bottom: 15px; 
+                color: #1a1a1a;
+              }
+              .content ul, .content ol { 
+                margin-bottom: 16px; 
+                padding-left: 30px;
+              }
+              .content li { margin-bottom: 8px; }
             </style>
           </head>
           <body>
             <h1>${blog.title}</h1>
             <div class="meta">
-              <p>Category: ${blog.category}</p>
-              <p>Published: ${new Date(blog.created_at).toLocaleDateString()}</p>
+              <p><strong>Category:</strong> ${blog.category}</p>
+              <p><strong>Published:</strong> ${new Date(blog.created_at).toLocaleDateString()}</p>
             </div>
+            ${blog.excerpt ? `<div class="excerpt">${blog.excerpt}</div>` : ''}
+            ${blog.featured_image_url ? `<div class="featured-image"><img src="${blog.featured_image_url}" alt="${blog.title}" /></div>` : ''}
             <div class="content">
-              ${blog.content.replace(/\n/g, '<br>')}
+              ${contentHtml}
             </div>
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.print();
+      
+      // Wait for images to load before printing
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+        }, 1000);
+      };
     }
   };
 
