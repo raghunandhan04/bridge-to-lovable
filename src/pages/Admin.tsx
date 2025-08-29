@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Plus, Edit, Trash } from 'lucide-react';
 import BlogManager from '@/components/admin/BlogManager';
 import ContentManager from '@/components/admin/ContentManager';
+import TestManager from '@/components/admin/TestManager';
 import LiveWebsitePreview from '@/components/admin/LiveWebsitePreview';
 
 const Admin = () => {
@@ -93,9 +94,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="blogs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="blogs">Blog Management</TabsTrigger>
             <TabsTrigger value="content">Content Management</TabsTrigger>
+            <TabsTrigger value="tests">Test Reports</TabsTrigger>
             <TabsTrigger value="preview">Live Website Editor</TabsTrigger>
           </TabsList>
 
@@ -105,6 +107,10 @@ const Admin = () => {
 
           <TabsContent value="content">
             <ContentManager userRole={userRole} />
+          </TabsContent>
+
+          <TabsContent value="tests">
+            <TestManager userRole={userRole} />
           </TabsContent>
 
           <TabsContent value="preview">
