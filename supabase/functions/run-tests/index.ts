@@ -42,10 +42,9 @@ serve(async (req) => {
 
   try {
     const { type } = await req.json();
+    console.log(`Starting ${type} test run...`);
     
-    // In a real implementation, you would run the actual tests here
-    // For now, we'll simulate test results
-    const report = await simulateTestRun(type);
+    const report = await runActualTests(type);
     
     return new Response(
       JSON.stringify(report),
@@ -57,7 +56,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error running tests:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to run tests' }),
+      JSON.stringify({ error: error.message || 'Failed to run tests' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
@@ -66,107 +65,169 @@ serve(async (req) => {
   }
 });
 
-async function simulateTestRun(type: string): Promise<TestReport> {
-  // Simulate test execution time
-  await new Promise(resolve => setTimeout(resolve, 2000));
+async function runActualTests(type: string): Promise<TestReport> {
+  const startTime = Date.now();
   
+  try {
+    // Determine which command to run based on test type
+    let command: string[];
+    switch (type) {
+      case 'unit':
+        command = ['npm', 'run', 'test', '--', '--run', '--reporter=json'];
+        break;
+      case 'integration':
+        command = ['npm', 'run', 'test:integration', '--', '--run', '--reporter=json'];
+        break;
+      case 'coverage':
+        command = ['npm', 'run', 'test:coverage', '--', '--run', '--reporter=json'];
+        break;
+      case 'all':
+        command = ['npm', 'run', 'test', '--', '--run', '--reporter=json'];
+        break;
+      default:
+        throw new Error(`Unknown test type: ${type}`);
+    }
+
+    console.log(`Running command: ${command.join(' ')}`);
+
+    // Execute the test command
+    const process = new Deno.Command(command[0], {
+      args: command.slice(1),
+      stdout: 'piped',
+      stderr: 'piped',
+      cwd: '/tmp' // This might need to be adjusted based on your setup
+    });
+
+    const { code, stdout, stderr } = await process.output();
+    
+    const stdoutText = new TextDecoder().decode(stdout);
+    const stderrText = new TextDecoder().decode(stderr);
+    
+    console.log('Test output:', stdoutText);
+    if (stderrText) console.error('Test errors:', stderrText);
+
+    // Parse the JSON output from Vitest
+    let testResults;
+    try {
+      // Vitest JSON output might be on multiple lines, get the last valid JSON
+      const lines = stdoutText.trim().split('\n');
+      for (let i = lines.length - 1; i >= 0; i--) {
+        try {
+          testResults = JSON.parse(lines[i]);
+          break;
+        } catch (e) {
+          continue;
+        }
+      }
+      
+      if (!testResults) {
+        throw new Error('No valid JSON found in test output');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse test output:', parseError);
+      // Return a fallback report with error information
+      return createErrorReport(type, stdoutText, stderrText, startTime);
+    }
+
+    // Parse coverage data if available and requested
+    let coverage;
+    if (type === 'coverage' || type === 'all') {
+      coverage = await parseCoverageReport();
+    }
+
+    // Convert Vitest results to our format
+    return convertVitestResults(testResults, coverage, startTime);
+
+  } catch (error) {
+    console.error('Test execution failed:', error);
+    return createErrorReport(type, '', error.message, startTime);
+  }
+}
+
+async function parseCoverageReport() {
+  try {
+    // Try to read coverage summary from the coverage directory
+    const coveragePath = '/tmp/coverage/coverage-summary.json';
+    let coverageData;
+    
+    try {
+      const coverageText = await Deno.readTextFile(coveragePath);
+      coverageData = JSON.parse(coverageText);
+    } catch {
+      // If coverage file doesn't exist, return null
+      return null;
+    }
+
+    // Extract total coverage percentages
+    const total = coverageData.total;
+    return {
+      lines: total?.lines?.pct || 0,
+      functions: total?.functions?.pct || 0,
+      branches: total?.branches?.pct || 0,
+      statements: total?.statements?.pct || 0,
+    };
+  } catch (error) {
+    console.error('Failed to parse coverage report:', error);
+    return null;
+  }
+}
+
+function convertVitestResults(vitestResults: any, coverage: any, startTime: number): TestReport {
+  const endTime = Date.now();
+  const duration = endTime - startTime;
+
   const suites: TestSuite[] = [];
   let totalTests = 0;
   let totalPassed = 0;
   let totalFailed = 0;
   let totalSkipped = 0;
-  let totalDuration = 0;
 
-  // Simulate different test suites based on type
-  if (type === 'unit' || type === 'all') {
-    // Utils Tests
-    const utilsSuite = createMockSuite('Utils Tests', [
-      { name: 'formatDate - formats ISO string correctly', status: 'passed', duration: 8 },
-      { name: 'formatDate - handles invalid dates gracefully', status: 'passed', duration: 12 },
-      { name: 'dateUtils.isValidDate - validates date objects', status: 'passed', duration: 5 },
-      { name: 'dateUtils.addDays - adds correct number of days', status: 'passed', duration: 7 },
-      { name: 'dateUtils.getRelativeTime - returns relative time strings', status: 'passed', duration: 9 },
-      { name: 'documentParser.extractText - parses PDF content', status: 'passed', duration: 25 },
-    ]);
-    suites.push(utilsSuite);
+  // Parse Vitest test files/suites
+  if (vitestResults.testResults) {
+    vitestResults.testResults.forEach((fileResult: any) => {
+      const tests: TestResult[] = [];
 
-    // Component Tests  
-    const componentSuite = createMockSuite('Component Tests', [
-      { name: 'Button - renders with correct variants', status: 'passed', duration: 15 },
-      { name: 'Button - handles click events properly', status: 'passed', duration: 18 },
-      { name: 'Button - applies disabled state correctly', status: 'passed', duration: 12 },
-      { name: 'BackButton - renders back navigation', status: 'passed', duration: 14 },
-      { name: 'BackButton - navigates to previous page on click', status: 'passed', duration: 22 },
-      { name: 'Card - displays content with proper styling', status: 'passed', duration: 13 },
-      { name: 'Form - validates input fields correctly', status: 'failed', duration: 31, error: 'AssertionError: Expected form validation to show error message for invalid email' },
-      { name: 'Navigation - renders menu items correctly', status: 'passed', duration: 19 },
-      { name: 'Footer - displays all required links', status: 'passed', duration: 11 },
-    ]);
-    suites.push(componentSuite);
+      if (fileResult.assertionResults) {
+        fileResult.assertionResults.forEach((test: any) => {
+          tests.push({
+            id: crypto.randomUUID(),
+            name: test.title || test.fullName || 'Unnamed test',
+            status: test.status === 'passed' ? 'passed' : 
+                   test.status === 'failed' ? 'failed' : 'skipped',
+            duration: test.duration || 0,
+            error: test.failureMessages?.join('\n') || undefined
+          });
+        });
+      }
 
-    // Hook Tests
-    const hooksSuite = createMockSuite('Hooks Tests', [
-      { name: 'useToast - displays toast messages', status: 'passed', duration: 16 },
-      { name: 'useContentSections - manages content state', status: 'passed', duration: 28 },
-      { name: 'useMobile - detects mobile viewport correctly', status: 'passed', duration: 14 },
-    ]);
-    suites.push(hooksSuite);
-    
-    [utilsSuite, componentSuite, hooksSuite].forEach(suite => {
-      totalTests += suite.tests.length;
-      totalPassed += suite.passed;
-      totalFailed += suite.failed;
-      totalSkipped += suite.skipped;
-      totalDuration += suite.duration;
+      const suitePassed = tests.filter(t => t.status === 'passed').length;
+      const suiteFailed = tests.filter(t => t.status === 'failed').length;
+      const suiteSkipped = tests.filter(t => t.status === 'skipped').length;
+      const suiteDuration = tests.reduce((sum, test) => sum + test.duration, 0);
+
+      suites.push({
+        name: fileResult.name || fileResult.testFilePath?.split('/').pop() || 'Unknown Suite',
+        tests,
+        passed: suitePassed,
+        failed: suiteFailed,
+        skipped: suiteSkipped,
+        duration: suiteDuration
+      });
+
+      totalTests += tests.length;
+      totalPassed += suitePassed;
+      totalFailed += suiteFailed;
+      totalSkipped += suiteSkipped;
     });
   }
 
-  if (type === 'integration' || type === 'all') {
-    // Page Integration Tests
-    const pageSuite = createMockSuite('Page Integration Tests', [
-      { name: 'Blog Page - renders loading state initially', status: 'passed', duration: 45 },
-      { name: 'Blog Page - displays blog categories in sidebar', status: 'passed', duration: 67 },
-      { name: 'Blog Page - shows featured articles in right sidebar', status: 'passed', duration: 52 },
-      { name: 'Blog Page - expands categories and shows blog posts', status: 'passed', duration: 89 },
-      { name: 'Blog Page - loads blog content when post is clicked', status: 'passed', duration: 134 },
-      { name: 'Blog Page - shows placeholder when no blog selected', status: 'passed', duration: 23 },
-      { name: 'Blog Page - responsive design on mobile devices', status: 'passed', duration: 78 },
-      { name: 'Blog Page - filters blogs by selected category', status: 'passed', duration: 95 },
-      { name: 'Admin Dashboard - requires authentication', status: 'passed', duration: 156 },
-      { name: 'Admin Dashboard - displays blog management tools', status: 'passed', duration: 98 },
-      { name: 'Admin Dashboard - content creation workflow', status: 'passed', duration: 234 },
-      { name: 'Admin Dashboard - file upload functionality', status: 'skipped', duration: 0 },
-    ]);
-    suites.push(pageSuite);
-
-    // API Integration Tests
-    const apiSuite = createMockSuite('API Integration Tests', [
-      { name: 'Supabase - blog posts fetch correctly', status: 'passed', duration: 87 },
-      { name: 'Supabase - authentication flow works', status: 'passed', duration: 145 },
-      { name: 'Supabase - file storage operations', status: 'passed', duration: 167 },
-      { name: 'Supabase - RLS policies enforce security', status: 'passed', duration: 123 },
-      { name: 'Edge Functions - test runner invocation', status: 'passed', duration: 201 },
-    ]);
-    suites.push(apiSuite);
-    
-    [pageSuite, apiSuite].forEach(suite => {
-      totalTests += suite.tests.length;
-      totalPassed += suite.passed;
-      totalFailed += suite.failed;
-      totalSkipped += suite.skipped;
-      totalDuration += suite.duration;
-    });
-  }
-
-  // Add coverage data if requested
-  let coverage;
-  if (type === 'coverage' || type === 'all') {
-    coverage = {
-      lines: Math.floor(Math.random() * 20) + 75, // 75-95%
-      functions: Math.floor(Math.random() * 15) + 80, // 80-95%
-      branches: Math.floor(Math.random() * 25) + 65, // 65-90%
-      statements: Math.floor(Math.random() * 20) + 75, // 75-95%
-    };
+  // If no testResults, try to parse from other formats
+  if (suites.length === 0 && vitestResults.numTotalTests) {
+    // Fallback parsing for different Vitest output formats
+    totalTests = vitestResults.numTotalTests || 0;
+    totalPassed = vitestResults.numPassedTests || 0;
+    totalFailed = vitestResults.numFailedTests || 0;
+    totalSkipped = vitestResults.numPendingTests || 0;
   }
 
   return {
@@ -176,32 +237,37 @@ async function simulateTestRun(type: string): Promise<TestReport> {
     passed: totalPassed,
     failed: totalFailed,
     skipped: totalSkipped,
-    duration: totalDuration,
+    duration,
     coverage,
-    suites,
+    suites
   };
 }
 
-function createMockSuite(name: string, testData: Array<{name: string, status: 'passed' | 'failed' | 'skipped', duration: number, error?: string}>): TestSuite {
-  const tests: TestResult[] = testData.map(test => ({
-    id: crypto.randomUUID(),
-    name: test.name,
-    status: test.status,
-    duration: test.duration,
-    error: test.error,
-  }));
-
-  const passed = tests.filter(t => t.status === 'passed').length;
-  const failed = tests.filter(t => t.status === 'failed').length;
-  const skipped = tests.filter(t => t.status === 'skipped').length;
-  const duration = tests.reduce((sum, test) => sum + test.duration, 0);
-
+function createErrorReport(type: string, stdout: string, stderr: string, startTime: number): TestReport {
+  const duration = Date.now() - startTime;
+  
   return {
-    name,
-    tests,
-    passed,
-    failed,
-    skipped,
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    totalTests: 0,
+    passed: 0,
+    failed: 1,
+    skipped: 0,
     duration,
+    coverage: null,
+    suites: [{
+      name: 'Test Execution Error',
+      tests: [{
+        id: crypto.randomUUID(),
+        name: `Failed to run ${type} tests`,
+        status: 'failed',
+        duration,
+        error: `STDOUT: ${stdout}\nSTDERR: ${stderr}`
+      }],
+      passed: 0,
+      failed: 1,
+      skipped: 0,
+      duration
+    }]
   };
 }
