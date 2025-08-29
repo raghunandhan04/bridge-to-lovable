@@ -15,7 +15,8 @@ import {
   BarChart3,
   Download,
   RefreshCw,
-  TestTube
+  TestTube,
+  Upload
 } from 'lucide-react';
 
 interface TestResult {
@@ -60,49 +61,77 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentReport, setCurrentReport] = useState<TestReport | null>(null);
   const [recentReports, setRecentReports] = useState<TestReport[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const runTests = async (type: 'unit' | 'integration' | 'coverage' | 'all') => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
     if (userRole !== 'admin') {
       toast({
         title: "Access Denied",
-        description: "Only admins can run tests.",
+        description: "Only admins can upload test results.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsRunning(true);
+    setIsUploading(true);
     try {
-      toast({
-        title: "Getting Instructions",
-        description: `Generating setup instructions for ${type} tests...`,
-      });
+      const text = await file.text();
+      const vitestOutput = JSON.parse(text);
+      
+      // Convert Vitest output to our TestReport format
+      const report: TestReport = {
+        id: `test-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        totalTests: vitestOutput.numTotalTests || 0,
+        passed: vitestOutput.numPassedTests || 0,
+        failed: vitestOutput.numFailedTests || 0,
+        skipped: vitestOutput.numPendingTests || 0,
+        duration: vitestOutput.perfStats?.end - vitestOutput.perfStats?.start || 0,
+        coverage: vitestOutput.coverageMap ? {
+          lines: Math.round((vitestOutput.coverageMap.getCoverageSummary?.()?.lines?.pct || 0)),
+          functions: Math.round((vitestOutput.coverageMap.getCoverageSummary?.()?.functions?.pct || 0)),
+          branches: Math.round((vitestOutput.coverageMap.getCoverageSummary?.()?.branches?.pct || 0)),
+          statements: Math.round((vitestOutput.coverageMap.getCoverageSummary?.()?.statements?.pct || 0))
+        } : undefined,
+        suites: vitestOutput.testResults?.map((suite: any) => ({
+          name: suite.name || 'Test Suite',
+          tests: suite.assertionResults?.map((test: any) => ({
+            id: test.fullName || test.title,
+            name: test.title || test.fullName,
+            status: test.status === 'passed' ? 'passed' : test.status === 'failed' ? 'failed' : 'skipped',
+            duration: test.duration || 0,
+            error: test.failureMessages?.[0]
+          })) || [],
+          passed: suite.numPassingTests || 0,
+          failed: suite.numFailingTests || 0,
+          skipped: suite.numPendingTests || 0,
+          duration: suite.perfStats?.end - suite.perfStats?.start || 0
+        })) || []
+      };
 
-      const { data, error } = await supabase.functions.invoke('run-tests', {
-        body: { type }
-      });
-
-      if (error) throw error;
-
-      const report: TestReport = data;
       setCurrentReport(report);
       setRecentReports(prev => [report, ...prev.slice(0, 9)]);
 
       toast({
-        title: "Setup Required",
-        description: "Please add the test scripts to package.json first, then run tests locally.",
-        variant: "default",
+        title: "Success",
+        description: `Test results uploaded successfully. ${report.passed}/${report.totalTests} tests passed.`,
+        variant: report.failed > 0 ? "destructive" : "default",
       });
     } catch (error) {
-      console.error('Test run error:', error);
+      console.error('Upload error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate instructions. Check console for details.",
+        description: "Failed to parse test results. Make sure you uploaded a valid JSON file from Vitest.",
         variant: "destructive",
       });
     } finally {
-      setIsRunning(false);
+      setIsUploading(false);
+      // Reset file input
+      event.target.value = '';
     }
   };
 
@@ -221,9 +250,17 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
 "test:integration": "vitest run --config vitest.config.integration.ts",
 "test:watch": "vitest --watch"`}</pre>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Then run tests locally using: <code className="bg-muted px-1 rounded">npm run test</code>
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Then run tests locally and generate results:
+              </p>
+              <div className="bg-muted p-2 rounded font-mono text-xs">
+                <code>npm run test -- --reporter=json &gt; test-results.json</code>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Upload the generated JSON file below to view results in this dashboard.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -237,38 +274,42 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button
-              onClick={() => runTests('unit')}
-              disabled={isRunning}
-              variant="outline"
-            >
-              {isRunning ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-              Unit Tests
-            </Button>
-            <Button
-              onClick={() => runTests('integration')}
-              disabled={isRunning}
-              variant="outline"
-            >
-              {isRunning ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-              Integration
-            </Button>
-            <Button
-              onClick={() => runTests('coverage')}
-              disabled={isRunning}
-              variant="outline"
-            >
-              {isRunning ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <BarChart3 className="w-4 h-4 mr-2" />}
-              Coverage
-            </Button>
-            <Button
-              onClick={() => runTests('all')}
-              disabled={isRunning}
-            >
-              {isRunning ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-              Run All Tests
-            </Button>
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              <div className="flex-1">
+                <label htmlFor="test-results" className="block text-sm font-medium mb-2">
+                  Upload Test Results
+                </label>
+                <input
+                  id="test-results"
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80 file:cursor-pointer cursor-pointer"
+                />
+              </div>
+              <Button
+                disabled={isUploading}
+                variant="default"
+                className="mt-6 sm:mt-0"
+              >
+                {isUploading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Results
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Upload the JSON file generated by running: <code>npm run test -- --reporter=json &gt; test-results.json</code>
+            </p>
           </div>
         </CardContent>
       </Card>
