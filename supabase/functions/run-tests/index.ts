@@ -41,10 +41,19 @@ serve(async (req) => {
   }
 
   try {
-    const { type } = await req.json();
-    console.log(`Starting ${type} test run...`);
+    const { type, results } = await req.json();
     
-    const report = await runActualTests(type);
+    let report: TestReport;
+    
+    if (results) {
+      // If test results are provided, use them
+      console.log('Processing provided test results...');
+      report = convertVitestResults(results, results.coverage, Date.now());
+    } else {
+      // Generate a mock report that indicates tests need to be run locally
+      console.log(`Generating instructions for ${type} test run...`);
+      report = generateInstructionReport(type);
+    }
     
     return new Response(
       JSON.stringify(report),
@@ -54,9 +63,9 @@ serve(async (req) => {
       },
     );
   } catch (error) {
-    console.error('Error running tests:', error);
+    console.error('Error processing tests:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to run tests' }),
+      JSON.stringify({ error: error.message || 'Failed to process tests' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
@@ -65,111 +74,38 @@ serve(async (req) => {
   }
 });
 
-async function runActualTests(type: string): Promise<TestReport> {
-  const startTime = Date.now();
-  
-  try {
-    // Determine which command to run based on test type
-    let command: string[];
-    switch (type) {
-      case 'unit':
-        command = ['npm', 'run', 'test', '--', '--run', '--reporter=json'];
-        break;
-      case 'integration':
-        command = ['npm', 'run', 'test:integration', '--', '--run', '--reporter=json'];
-        break;
-      case 'coverage':
-        command = ['npm', 'run', 'test:coverage', '--', '--run', '--reporter=json'];
-        break;
-      case 'all':
-        command = ['npm', 'run', 'test', '--', '--run', '--reporter=json'];
-        break;
-      default:
-        throw new Error(`Unknown test type: ${type}`);
-    }
+function generateInstructionReport(type: string): TestReport {
+  const commands = {
+    unit: 'npm run test',
+    integration: 'npm run test:integration', 
+    coverage: 'npm run test:coverage',
+    all: 'npm run test'
+  };
 
-    console.log(`Running command: ${command.join(' ')}`);
-
-    // Execute the test command
-    const process = new Deno.Command(command[0], {
-      args: command.slice(1),
-      stdout: 'piped',
-      stderr: 'piped',
-      cwd: '/tmp' // This might need to be adjusted based on your setup
-    });
-
-    const { code, stdout, stderr } = await process.output();
-    
-    const stdoutText = new TextDecoder().decode(stdout);
-    const stderrText = new TextDecoder().decode(stderr);
-    
-    console.log('Test output:', stdoutText);
-    if (stderrText) console.error('Test errors:', stderrText);
-
-    // Parse the JSON output from Vitest
-    let testResults;
-    try {
-      // Vitest JSON output might be on multiple lines, get the last valid JSON
-      const lines = stdoutText.trim().split('\n');
-      for (let i = lines.length - 1; i >= 0; i--) {
-        try {
-          testResults = JSON.parse(lines[i]);
-          break;
-        } catch (e) {
-          continue;
-        }
-      }
-      
-      if (!testResults) {
-        throw new Error('No valid JSON found in test output');
-      }
-    } catch (parseError) {
-      console.error('Failed to parse test output:', parseError);
-      // Return a fallback report with error information
-      return createErrorReport(type, stdoutText, stderrText, startTime);
-    }
-
-    // Parse coverage data if available and requested
-    let coverage;
-    if (type === 'coverage' || type === 'all') {
-      coverage = await parseCoverageReport();
-    }
-
-    // Convert Vitest results to our format
-    return convertVitestResults(testResults, coverage, startTime);
-
-  } catch (error) {
-    console.error('Test execution failed:', error);
-    return createErrorReport(type, '', error.message, startTime);
-  }
-}
-
-async function parseCoverageReport() {
-  try {
-    // Try to read coverage summary from the coverage directory
-    const coveragePath = '/tmp/coverage/coverage-summary.json';
-    let coverageData;
-    
-    try {
-      const coverageText = await Deno.readTextFile(coveragePath);
-      coverageData = JSON.parse(coverageText);
-    } catch {
-      // If coverage file doesn't exist, return null
-      return null;
-    }
-
-    // Extract total coverage percentages
-    const total = coverageData.total;
-    return {
-      lines: total?.lines?.pct || 0,
-      functions: total?.functions?.pct || 0,
-      branches: total?.branches?.pct || 0,
-      statements: total?.statements?.pct || 0,
-    };
-  } catch (error) {
-    console.error('Failed to parse coverage report:', error);
-    return null;
-  }
+  return {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    totalTests: 0,
+    passed: 0,
+    failed: 0,
+    skipped: 0,
+    duration: 0,
+    coverage: null,
+    suites: [{
+      name: `${type.charAt(0).toUpperCase() + type.slice(1)} Test Instructions`,
+      tests: [{
+        id: crypto.randomUUID(),
+        name: `Run ${type} tests locally`,
+        status: 'skipped',
+        duration: 0,
+        error: `To run ${type} tests, execute: ${commands[type as keyof typeof commands] || commands.all}\n\nThen upload the results using the API or run tests locally to see actual results.`
+      }],
+      passed: 0,
+      failed: 0,
+      skipped: 1,
+      duration: 0
+    }]
+  };
 }
 
 function convertVitestResults(vitestResults: any, coverage: any, startTime: number): TestReport {

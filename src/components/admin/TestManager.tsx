@@ -74,6 +74,11 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
 
     setIsRunning(true);
     try {
+      toast({
+        title: "Getting Instructions",
+        description: `Generating setup instructions for ${type} tests...`,
+      });
+
       const { data, error } = await supabase.functions.invoke('run-tests', {
         body: { type }
       });
@@ -85,15 +90,15 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
       setRecentReports(prev => [report, ...prev.slice(0, 9)]);
 
       toast({
-        title: "Tests Completed",
-        description: `${report.passed} passed, ${report.failed} failed`,
-        variant: report.failed > 0 ? "destructive" : "default",
+        title: "Setup Required",
+        description: "Please add the test scripts to package.json first, then run tests locally.",
+        variant: "default",
       });
     } catch (error) {
       console.error('Test run error:', error);
       toast({
-        title: "Test Run Failed",
-        description: "Failed to run tests. Check console for details.",
+        title: "Error",
+        description: "Failed to generate instructions. Check console for details.",
         variant: "destructive",
       });
     } finally {
@@ -195,6 +200,34 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
 
   return (
     <div className="space-y-6">
+      {/* Setup Instructions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Test Setup Instructions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Your package.json is missing test scripts. Add these to the "scripts" section:
+            </p>
+            <div className="bg-muted p-3 rounded-lg font-mono text-sm">
+              <pre>{`"test": "vitest",
+"test:ui": "vitest --ui",
+"test:run": "vitest run",
+"test:coverage": "vitest run --coverage",
+"test:integration": "vitest run --config vitest.config.integration.ts",
+"test:watch": "vitest --watch"`}</pre>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Then run tests locally using: <code className="bg-muted px-1 rounded">npm run test</code>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Test Controls */}
       <Card>
         <CardHeader>
