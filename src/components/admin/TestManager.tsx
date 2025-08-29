@@ -308,18 +308,24 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
                     {suite.passed} passed, {suite.failed} failed, {suite.skipped} skipped ({suite.duration}ms)
                   </div>
                   <div className="space-y-1">
-                    {suite.tests.slice(0, 5).map((test, testIndex) => (
-                      <div key={testIndex} className="flex items-center gap-2 text-sm">
-                        {getStatusIcon(test.status)}
-                        <span className={test.status === 'failed' ? 'text-red-500' : ''}>{test.name}</span>
-                        <span className="text-muted-foreground">({test.duration}ms)</span>
+                    {suite.tests.map((test, testIndex) => (
+                      <div key={testIndex} className="flex items-center justify-between text-sm p-2 rounded border-l-2 border-l-muted">
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(test.status)}
+                          <span className={test.status === 'failed' ? 'text-red-500' : 'text-foreground'}>
+                            {test.name}
+                          </span>
+                        </div>
+                        <span className="text-muted-foreground text-xs">
+                          {test.duration}ms
+                        </span>
+                        {test.error && (
+                          <div className="mt-1 text-xs text-red-500 font-mono bg-red-50 p-1 rounded">
+                            {test.error}
+                          </div>
+                        )}
                       </div>
                     ))}
-                    {suite.tests.length > 5 && (
-                      <div className="text-sm text-muted-foreground">
-                        ... and {suite.tests.length - 5} more tests
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
