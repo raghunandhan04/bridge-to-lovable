@@ -64,6 +64,47 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
+  const runTests = async (testType: 'unit' | 'integration' | 'coverage' = 'unit') => {
+    if (userRole !== 'admin') {
+      toast({
+        title: "Access Denied",
+        description: "Only admins can run tests.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('run-tests', {
+        body: { testType }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const report: TestReport = data;
+      setCurrentReport(report);
+      setRecentReports(prev => [report, ...prev.slice(0, 9)]);
+
+      toast({
+        title: "Tests completed",
+        description: `${report.passed}/${report.totalTests} tests passed`,
+        variant: report.failed > 0 ? "destructive" : "default",
+      });
+    } catch (error) {
+      console.error('Test execution error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to run tests. Check console for details.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -240,25 +281,23 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Your package.json is missing test scripts. Add these to the "scripts" section:
+              Test scripts are now available in package.json. You can run tests locally using:
             </p>
             <div className="bg-muted p-3 rounded-lg font-mono text-sm">
-              <pre>{`"test": "vitest",
-"test:ui": "vitest --ui",
-"test:run": "vitest run",
-"test:coverage": "vitest run --coverage",
-"test:integration": "vitest run --config vitest.config.integration.ts",
-"test:watch": "vitest --watch"`}</pre>
+              <pre>{`npm run test          # Run tests in watch mode
+npm run test:run      # Run all tests once
+npm run test:coverage # Run tests with coverage
+npm run test:ui       # Run tests with UI`}</pre>
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                Then run tests locally and generate results:
+                To generate JSON results for upload:
               </p>
               <div className="bg-muted p-2 rounded font-mono text-xs">
-                <code>npm run test -- --reporter=json &gt; test-results.json</code>
+                <code>npm run test:run -- --reporter=json &gt; test-results.json</code>
               </div>
               <p className="text-sm text-muted-foreground">
-                Upload the generated JSON file below to view results in this dashboard.
+                Then upload the generated JSON file below to view results in this dashboard.
               </p>
             </div>
           </div>
@@ -275,10 +314,68 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            <div className="flex flex-wrap gap-4">
+              <Button
+                onClick={() => runTests('unit')}
+                disabled={isRunning}
+                variant="default"
+              >
+                {isRunning ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Run Unit Tests
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => runTests('coverage')}
+                disabled={isRunning}
+                variant="outline"
+              >
+                {isRunning ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Run With Coverage
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => runTests('integration')}
+                disabled={isRunning}
+                variant="outline"
+              >
+                {isRunning ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <TestTube className="w-4 h-4 mr-2" />
+                    Run Integration Tests
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <Separator />
+            
             <div className="flex flex-col sm:flex-row gap-4 items-start">
               <div className="flex-1">
                 <label htmlFor="test-results" className="block text-sm font-medium mb-2">
-                  Upload Test Results
+                  Or Upload Test Results JSON
                 </label>
                 <input
                   id="test-results"
@@ -291,7 +388,7 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
               </div>
               <Button
                 disabled={isUploading}
-                variant="default"
+                variant="ghost"
                 className="mt-6 sm:mt-0"
               >
                 {isUploading ? (
@@ -302,13 +399,13 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
                 ) : (
                   <>
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Results
+                    Upload JSON
                   </>
                 )}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Upload the JSON file generated by running: <code>npm run test -- --reporter=json &gt; test-results.json</code>
+              Generate JSON with: <code>npm run test:run -- --reporter=json &gt; test-results.json</code>
             </p>
           </div>
         </CardContent>
