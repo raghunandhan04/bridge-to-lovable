@@ -24,9 +24,14 @@ describe('Date Utilities', () => {
 
   describe('formatDateTime', () => {
     it('should format date and time correctly', () => {
-      const dateTime = '2024-01-15T14:30:00.000Z';
-      const result = formatDateTime(dateTime);
-      expect(result).toBe('Jan 15, 2024 14:30');
+  const dateTime = '2024-01-15T14:30:00.000Z';
+  const result = formatDateTime(dateTime);
+  // Expect local timezone conversion; build expected string using Date
+  const d = new Date(dateTime);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const expected = `${months[d.getMonth()]} ${pad(d.getDate())}, ${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  expect(result).toBe(expected);
     });
   });
 

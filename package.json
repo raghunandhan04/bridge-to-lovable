@@ -8,7 +8,12 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+  "preview": "vite preview",
+  "test": "vitest --run --config vitest.config.ts",
+  "test:watch": "vitest --config vitest.config.ts",
+  "test:ui": "vitest --ui --config vitest.config.ts",
+  "test:coverage": "vitest --run --coverage --config vitest.config.ts",
+  "test:integration": "vitest --run --config vitest.config.integration.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^10.0.0",
