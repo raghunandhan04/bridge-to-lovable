@@ -17,7 +17,8 @@ import {
   RefreshCw,
   TestTube,
   Upload,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -79,7 +80,10 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
     setIsRunning(true);
     try {
       const { data, error } = await supabase.functions.invoke('run-tests', {
-        body: { testType }
+        body: { 
+          testType,
+          runActualTests: true
+        }
       });
 
       if (error) {
@@ -323,6 +327,47 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            <div className="flex gap-4 mb-6">
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  Run actual tests from your project or upload test results:
+                </p>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => runTests('unit')} 
+                    disabled={isRunning}
+                    className="flex items-center gap-2"
+                  >
+                    {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                    Run Unit Tests
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => runTests('integration')} 
+                    disabled={isRunning}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                    Run Integration Tests
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => runTests('coverage')} 
+                    disabled={isRunning}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
+                    Run Coverage Tests
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
+            
             <h3 className="text-lg font-semibold mb-4">Upload Real Test Results</h3>
             
             <div className="flex flex-col sm:flex-row gap-4 items-start">

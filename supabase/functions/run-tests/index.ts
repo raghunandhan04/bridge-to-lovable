@@ -42,7 +42,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { testType = 'unit', vitestResults, coverage } = body;
+    const { testType = 'unit', vitestResults, coverage, runActualTests = false } = body;
     const startTime = Date.now();
 
     let report: TestReport;
@@ -50,6 +50,9 @@ serve(async (req) => {
     if (vitestResults) {
       // Convert provided Vitest results
       report = convertVitestResults(vitestResults, coverage, startTime);
+    } else if (runActualTests) {
+      // Run actual tests using subprocess
+      report = await runActualTests(testType, startTime);
     } else {
       // Generate realistic test report based on actual test files
       report = await generateActualTestReport(testType, startTime);
@@ -222,6 +225,125 @@ function convertVitestResults(vitestResults: any, coverage: any, startTime: numb
   };
 }
 
+async function runActualTests(testType: string, startTime: number): Promise<TestReport> {
+  console.log(`Running actual ${testType} tests...`);
+  
+  try {
+    // Determine the test command based on type
+    let command: string[];
+    
+    switch (testType) {
+      case 'coverage':
+        command = ['npm', 'run', 'test:coverage', '--', '--reporter=json'];
+        break;
+      case 'integration':
+        command = ['npm', 'run', 'test:integration', '--', '--reporter=json'];
+        break;
+      default:
+        command = ['npm', 'run', 'test:run', '--', '--reporter=json'];
+    }
+
+    console.log('Executing command:', command.join(' '));
+
+    // Execute the test command
+    const process = new Deno.Command(command[0], {
+      args: command.slice(1),
+      stdout: 'piped',
+      stderr: 'piped',
+      cwd: '/home/deno',
+    });
+
+    const { code, stdout, stderr } = await process.output();
+    
+    const stdoutText = new TextDecoder().decode(stdout);
+    const stderrText = new TextDecoder().decode(stderr);
+    
+    console.log('Test execution stdout:', stdoutText);
+    console.log('Test execution stderr:', stderrText);
+    console.log('Exit code:', code);
+
+    if (code !== 0) {
+      console.error('Tests failed with exit code:', code);
+      return createErrorReport(testType, stdoutText, stderrText, startTime);
+    }
+
+    // Try to parse JSON output from Vitest
+    try {
+      const vitestResults = JSON.parse(stdoutText);
+      return convertVitestResults(vitestResults, null, startTime);
+    } catch (parseError) {
+      console.error('Failed to parse test output as JSON:', parseError);
+      
+      // Fallback: parse text output manually
+      return parseTextOutput(stdoutText, testType, startTime);
+    }
+
+  } catch (error) {
+    console.error('Error running actual tests:', error);
+    return createErrorReport(testType, '', error.message, startTime);
+  }
+}
+
+function parseTextOutput(output: string, testType: string, startTime: number): TestReport {
+  const duration = Date.now() - startTime;
+  const lines = output.split('\n');
+  
+  // Extract test results from text output
+  const testPattern = /✓|×|\s+(.*?)\s+\(\d+ms\)/g;
+  const suites: TestSuite[] = [];
+  let currentSuite: TestSuite | null = null;
+  
+  for (const line of lines) {
+    if (line.includes('.test.')) {
+      // New test suite
+      const suiteName = line.trim();
+      currentSuite = {
+        name: suiteName,
+        tests: [],
+        passed: 0,
+        failed: 0,
+        skipped: 0,
+        duration: 0
+      };
+      suites.push(currentSuite);
+    } else if (currentSuite && (line.includes('✓') || line.includes('×'))) {
+      // Individual test result
+      const isPassed = line.includes('✓');
+      const testName = line.replace(/[✓×]/g, '').trim();
+      const durationMatch = line.match(/\((\d+)ms\)/);
+      const testDuration = durationMatch ? parseInt(durationMatch[1]) : 0;
+      
+      const test: TestResult = {
+        id: crypto.randomUUID(),
+        name: testName,
+        status: isPassed ? 'passed' : 'failed',
+        duration: testDuration
+      };
+      
+      currentSuite.tests.push(test);
+      if (isPassed) currentSuite.passed++;
+      else currentSuite.failed++;
+      currentSuite.duration += testDuration;
+    }
+  }
+  
+  // Calculate totals
+  const totalTests = suites.reduce((sum, suite) => sum + suite.tests.length, 0);
+  const totalPassed = suites.reduce((sum, suite) => sum + suite.passed, 0);
+  const totalFailed = suites.reduce((sum, suite) => sum + suite.failed, 0);
+  
+  return {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    totalTests,
+    passed: totalPassed,
+    failed: totalFailed,
+    skipped: 0,
+    duration,
+    suites
+  };
+}
+
 function createErrorReport(type: string, stdout: string, stderr: string, startTime: number): TestReport {
   const duration = Date.now() - startTime;
   
@@ -233,7 +355,7 @@ function createErrorReport(type: string, stdout: string, stderr: string, startTi
     failed: 1,
     skipped: 0,
     duration,
-    coverage: null,
+    coverage: undefined,
     suites: [{
       name: 'Test Execution Error',
       tests: [{
