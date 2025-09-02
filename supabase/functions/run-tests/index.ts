@@ -52,7 +52,7 @@ serve(async (req) => {
       report = convertVitestResults(vitestResults, coverage, startTime);
     } else {
       // Generate realistic test report based on actual test files
-      report = await generateRealisticTestReport(testType, startTime);
+      report = await generateActualTestReport(testType, startTime);
     }
 
     return new Response(JSON.stringify(report), {
@@ -71,7 +71,7 @@ serve(async (req) => {
   }
 });
 
-async function generateRealisticTestReport(type: string, startTime: number): Promise<TestReport> {
+async function generateActualTestReport(type: string, startTime: number): Promise<TestReport> {
   const endTime = Date.now();
   const duration = endTime - startTime;
 

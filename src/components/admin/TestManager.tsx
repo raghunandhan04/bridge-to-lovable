@@ -16,8 +16,10 @@ import {
   Download,
   RefreshCw,
   TestTube,
-  Upload
+  Upload,
+  AlertTriangle
 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface TestResult {
   id: string;
@@ -281,23 +283,30 @@ const TestManager: React.FC<TestManagerProps> = ({ userRole }) => {
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Test scripts are now available in package.json. You can run tests locally using:
+              To get real test results from your actual test files, run tests locally and upload the JSON output:
             </p>
-            <div className="bg-muted p-3 rounded-lg font-mono text-sm">
-              <pre>{`npm run test          # Run tests in watch mode
-npm run test:run      # Run all tests once
-npm run test:coverage # Run tests with coverage
-npm run test:ui       # Run tests with UI`}</pre>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                To generate JSON results for upload:
-              </p>
-              <div className="bg-muted p-2 rounded font-mono text-xs">
-                <code>npm run test:run -- --reporter=json &gt; test-results.json</code>
+            <div className="bg-muted p-3 rounded-lg">
+              <h4 className="font-semibold text-sm mb-2">Step 1: Run Tests Locally</h4>
+              <div className="font-mono text-xs space-y-1">
+                <div className="flex items-center gap-2">
+                  <code className="bg-background px-2 py-1 rounded">npm run test</code>
+                  <span className="text-muted-foreground">- Interactive test runner</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-background px-2 py-1 rounded">vitest run --reporter=json --outputFile=test-results.json</code>
+                  <span className="text-muted-foreground">- Generate JSON report</span>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Then upload the generated JSON file below to view results in this dashboard.
+            </div>
+            <div className="bg-muted p-3 rounded-lg">
+              <h4 className="font-semibold text-sm mb-2">Step 2: Upload Results</h4>
+              <p className="text-xs text-muted-foreground">
+                Upload the generated <code>test-results.json</code> file using the form below to view your actual test results in this dashboard.
+              </p>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-900 dark:text-blue-100">
+                <strong>Current Test Files:</strong> button.test.tsx, Blog.test.tsx, BackButton.test.tsx
               </p>
             </div>
           </div>
@@ -314,68 +323,12 @@ npm run test:ui       # Run tests with UI`}</pre>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-4">
-              <Button
-                onClick={() => runTests('unit')}
-                disabled={isRunning}
-                variant="default"
-              >
-                {isRunning ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Run Unit Tests
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => runTests('coverage')}
-                disabled={isRunning}
-                variant="outline"
-              >
-                {isRunning ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Run With Coverage
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => runTests('integration')}
-                disabled={isRunning}
-                variant="outline"
-              >
-                {isRunning ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <TestTube className="w-4 h-4 mr-2" />
-                    Run Integration Tests
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <Separator />
+            <h3 className="text-lg font-semibold mb-4">Upload Real Test Results</h3>
             
             <div className="flex flex-col sm:flex-row gap-4 items-start">
               <div className="flex-1">
                 <label htmlFor="test-results" className="block text-sm font-medium mb-2">
-                  Or Upload Test Results JSON
+                  Select Vitest JSON Report File
                 </label>
                 <input
                   id="test-results"
@@ -405,7 +358,7 @@ npm run test:ui       # Run tests with UI`}</pre>
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Generate JSON with: <code>npm run test:run -- --reporter=json &gt; test-results.json</code>
+              Generate JSON with: <code>vitest run --reporter=json --outputFile=test-results.json</code>
             </p>
           </div>
         </CardContent>
