@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { beforeAll, afterEach, afterAll, vi } from 'vitest';
 import { testServer } from './testServer';
+import { supabase } from '@/integrations/supabase/client';
 
 // Establish API mocking before all tests
 beforeAll(() => testServer.listen({ onUnhandledRequest: 'error' }));
@@ -47,3 +48,27 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// Stub Supabase realtime channel to avoid network calls in tests
+// The hook useContentSections subscribes to realtime updates; we replace it with no-op
+try {
+  const mockChannel = {
+    on: vi.fn().mockReturnThis(),
+    subscribe: vi.fn().mockReturnValue({
+      unsubscribe: vi.fn(),
+      state: 'SUBSCRIBED',
+    }),
+  } as any;
+
+  if (supabase && (supabase as any).channel) {
+    vi.spyOn(supabase as any, 'channel').mockImplementation(() => mockChannel);
+    // Also mock removeChannel
+    if ((supabase as any).removeChannel) {
+      vi.spyOn(supabase as any, 'removeChannel').mockImplementation(() => ({ status: 'ok' }));
+    } else {
+      (supabase as any).removeChannel = vi.fn();
+    }
+  }
+} catch (e) {
+  // Ignore if supabase import shape changes; tests can proceed
+}
