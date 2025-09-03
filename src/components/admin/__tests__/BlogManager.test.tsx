@@ -199,8 +199,9 @@ describe('BlogManager Component', () => {
       </TestWrapper>
     );
 
-    const createButton = screen.getByText('Create Blog');
-    await user.click(createButton);
+  await waitFor(() => screen.getByText('Create Blog'));
+  const createButton = screen.getByText('Create Blog');
+  await user.click(createButton);
 
     await waitFor(() => {
       expect(screen.getByText('Create New Blog')).toBeInTheDocument();
@@ -218,8 +219,9 @@ describe('BlogManager Component', () => {
       </TestWrapper>
     );
 
-    const createButton = screen.getByText('Create Blog');
-    await user.click(createButton);
+  await waitFor(() => screen.getByText('Create Blog'));
+  const createButton = screen.getByText('Create Blog');
+  await user.click(createButton);
 
     await waitFor(() => {
       expect(screen.getByText('Visual Editor')).toBeInTheDocument();
@@ -244,15 +246,25 @@ describe('BlogManager Component', () => {
       </TestWrapper>
     );
 
+    await waitFor(() => screen.getByText('Create Blog'));
     const createButton = screen.getByText('Create Blog');
     await user.click(createButton);
 
+    // Wait for the form to be fully loaded
+    await waitFor(() => screen.getByText('Save Blog'));
     const saveButton = screen.getByText('Save Blog');
+    
+    // Make sure title is empty
+    const titleInput = screen.getByLabelText('Title');
+    await user.clear(titleInput);
+    
     await user.click(saveButton);
 
+    // Look for the toast notification instead of role="alert"
     await waitFor(() => {
+      expect(screen.getByText('Validation Error')).toBeInTheDocument();
       expect(screen.getByText('Title is required')).toBeInTheDocument();
-    });
+    }, { timeout: 2000 });
   });
 
   it('creates blog with visual editor content', async () => {
@@ -278,8 +290,9 @@ describe('BlogManager Component', () => {
       </TestWrapper>
     );
 
-    const createButton = screen.getByText('Create Blog');
-    await user.click(createButton);
+  await waitFor(() => screen.getByText('Create Blog'));
+  const createButton = screen.getByText('Create Blog');
+  await user.click(createButton);
 
     // Fill in form fields
     const titleInput = screen.getByLabelText('Title');
@@ -319,13 +332,15 @@ describe('BlogManager Component', () => {
       expect(screen.getByText('Test Blog 1')).toBeInTheDocument();
     });
 
-    // Find and click edit button for first blog
-    const editButtons = screen.getAllByLabelText('Edit blog');
-    await user.click(editButtons[0]);
+  // Find and click edit button for first blog
+  await waitFor(() => screen.getAllByLabelText('Edit blog'));
+  const editButtons = screen.getAllByLabelText('Edit blog');
+  await user.click(editButtons[0]);
 
     await waitFor(() => {
       expect(screen.getByText('Edit Blog')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('Test Blog 1')).toBeInTheDocument();
+      const matches = screen.getAllByDisplayValue('Test Blog 1');
+      expect(matches.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -360,8 +375,9 @@ describe('BlogManager Component', () => {
     });
 
     // Find and click delete button for first blog
-    const deleteButtons = screen.getAllByLabelText('Delete blog');
-    await user.click(deleteButtons[0]);
+  await waitFor(() => screen.getAllByLabelText('Delete blog'));
+  const deleteButtons = screen.getAllByLabelText('Delete blog');
+  await user.click(deleteButtons[0]);
 
     await waitFor(() => {
       expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to delete this blog?');

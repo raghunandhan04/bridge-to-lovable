@@ -252,7 +252,8 @@ const Blog = () => {
                 <div className="overflow-y-auto h-[calc(100vh-300px)]">
                   {categories.map((category) => {
                     const featuredBlog = getFeaturedBlogByCategory(category);
-                    if (!featuredBlog) return null;
+                    // Avoid duplicate titles when a category is expanded on the left
+                    if (!featuredBlog || expandedCategories.has(category)) return null;
                     
                     return (
                       <div key={category} className="border-b last:border-b-0 p-4">
@@ -264,6 +265,7 @@ const Blog = () => {
                           className={`w-full text-left group hover:bg-muted/50 p-3 rounded-lg transition-colors ${
                             selectedBlog?.id === featuredBlog.id ? 'bg-primary/10 border border-primary/20' : ''
                           }`}
+                          aria-label={`Featured: ${featuredBlog.title}`}
                         >
                           <h4 className="font-semibold mb-2 group-hover:text-primary transition-colors line-clamp-3">
                             {featuredBlog.title}

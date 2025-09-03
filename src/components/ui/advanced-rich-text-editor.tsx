@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useCallback } from 'react';
+import React, { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { cn } from '@/lib/utils';
@@ -54,12 +54,22 @@ const AdvancedRichTextEditor: React.FC<AdvancedRichTextEditorProps> = ({
   height = "400px"
 }) => {
   console.log('AdvancedRichTextEditor rendering'); // Debug log
-  
+
   const quillRef = useRef<ReactQuill>(null);
+  // State must be declared before being referenced anywhere (including dependency arrays)
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
+  useEffect(() => {
+    const editor = quillRef.current?.getEditor?.();
+    const root: HTMLElement | undefined = editor?.root;
+    if (root) {
+      root.setAttribute('role', 'textbox');
+      root.setAttribute('aria-label', 'Content');
+    }
+    // Run once on mount; no dependency on isPreviewMode is required for accessibility attrs
+  }, []);
   
   // Table dialog state
   const [showTableDialog, setShowTableDialog] = useState(false);
@@ -650,6 +660,7 @@ const AdvancedRichTextEditor: React.FC<AdvancedRichTextEditorProps> = ({
               <ReactQuill
                 ref={quillRef}
                 theme="snow"
+                aria-label="Content"
                 value={value}
                 onChange={handleChange}
                 modules={modules}

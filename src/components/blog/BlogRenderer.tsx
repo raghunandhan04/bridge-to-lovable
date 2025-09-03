@@ -49,7 +49,8 @@ const BlogRenderer: React.FC<BlogRendererProps> = ({ blog, className }) => {
             <div className="order-2 lg:order-1">
               <img 
                 src={content.imageUrl} 
-                alt=""
+                alt={content.caption || 'Image'}
+                title={content.caption || 'Image'}
                 className={cn(commonImageClasses, "w-full h-64 object-cover")}
                 style={{ width: `${content.width}%`, color: content.textColor }}
               />
@@ -79,7 +80,8 @@ const BlogRenderer: React.FC<BlogRendererProps> = ({ blog, className }) => {
             <div className="order-2">
               <img 
                 src={content.imageUrl} 
-                alt=""
+                alt={content.caption || 'Image'}
+                title={content.caption || 'Image'}
                 className={cn(commonImageClasses, "w-full h-64 object-cover")}
                 style={{ width: `${content.width}%` }}
               />
@@ -92,7 +94,8 @@ const BlogRenderer: React.FC<BlogRendererProps> = ({ blog, className }) => {
           <div className={cn("w-full", `text-${content.alignment}`)}>
             <img 
               src={content.imageUrl} 
-              alt=""
+              alt={content.caption || 'Image'}
+              title={content.caption || 'Image'}
               className={cn(commonImageClasses, "w-full h-80 object-cover")}
               style={{ width: `${content.width}%` }}
             />
@@ -121,7 +124,8 @@ const BlogRenderer: React.FC<BlogRendererProps> = ({ blog, className }) => {
             <figure>
               <img 
                 src={content.imageUrl} 
-                alt=""
+                alt={content.caption || 'Image'}
+                title={content.caption || 'Image'}
                 className={cn(commonImageClasses, "w-full h-64 object-cover mx-auto")}
                 style={{ width: `${content.width}%` }}
               />
@@ -143,6 +147,7 @@ const BlogRenderer: React.FC<BlogRendererProps> = ({ blog, className }) => {
             >
               <iframe
                 src={content.videoUrl}
+                title={content.videoUrl}
                 className="w-full h-full"
                 allowFullScreen
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

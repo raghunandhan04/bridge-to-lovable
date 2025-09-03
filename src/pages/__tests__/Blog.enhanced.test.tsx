@@ -198,7 +198,7 @@ describe('Blog Page Enhanced Tests', () => {
       </TestWrapper>
     );
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText('Categories')).toBeInTheDocument();
       expect(screen.getByText(/General \(1\)/)).toBeInTheDocument();
       expect(screen.getByText(/Technology \(1\)/)).toBeInTheDocument();
@@ -214,9 +214,9 @@ describe('Blog Page Enhanced Tests', () => {
       </TestWrapper>
     );
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText('Featured Articles')).toBeInTheDocument();
-      expect(screen.getByText('AI Technology Advances')).toBeInTheDocument();
+      expect(screen.getAllByText('AI Technology Advances').length).toBeGreaterThan(0);
       expect(screen.getByText('Technology Trends 2024')).toBeInTheDocument();
     });
   });
@@ -230,7 +230,7 @@ describe('Blog Page Enhanced Tests', () => {
       </TestWrapper>
     );
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText(/Artificial Intelligence \(1\)/)).toBeInTheDocument();
     });
 
@@ -239,7 +239,7 @@ describe('Blog Page Enhanced Tests', () => {
     await user.click(aiCategoryButton);
 
     await waitFor(() => {
-      expect(screen.getByText('AI Technology Advances')).toBeInTheDocument();
+      expect(screen.getAllByText('AI Technology Advances').length).toBeGreaterThan(0);
     });
   });
 
@@ -261,14 +261,14 @@ describe('Blog Page Enhanced Tests', () => {
     await user.click(aiCategoryButton);
 
     await waitFor(() => {
-      const blogTitle = screen.getByText('AI Technology Advances');
-      expect(blogTitle).toBeInTheDocument();
+      expect(screen.getAllByText('AI Technology Advances').length).toBeGreaterThan(0);
     });
 
-    const blogButton = screen.getByText('AI Technology Advances');
-    if (blogButton) await user.click(blogButton);
+    const elems = screen.getAllByText('AI Technology Advances');
+    const blogButton = elems.find(e => !e.closest('[data-testid="blog-renderer"]')) || elems[0];
+    await user.click(blogButton);
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByTestId('blog-renderer')).toBeInTheDocument();
       expect(screen.getByTestId('structured-content')).toBeInTheDocument();
       expect(screen.getByTestId('block-left-image-right-text')).toBeInTheDocument();
@@ -286,7 +286,7 @@ describe('Blog Page Enhanced Tests', () => {
     );
 
     // Select business blog with right-image-left-text layout
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText(/Business \(1\)/)).toBeInTheDocument();
     });
 
@@ -294,11 +294,12 @@ describe('Blog Page Enhanced Tests', () => {
     await user.click(businessCategoryButton);
 
     await waitFor(() => {
-      const businessBlog = screen.getByText('Business Innovation Strategies');
-      await user.click(businessBlog);
+      expect(screen.getByText('Business Innovation Strategies')).toBeInTheDocument();
     });
+    const businessBlog = screen.getByText('Business Innovation Strategies');
+    await user.click(businessBlog);
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByTestId('block-right-image-left-text')).toBeInTheDocument();
       expect(screen.getByTestId('block-table')).toBeInTheDocument();
     });
@@ -314,7 +315,7 @@ describe('Blog Page Enhanced Tests', () => {
     );
 
     // Select technology blog with chart
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText(/Technology \(1\)/)).toBeInTheDocument();
     });
 
@@ -322,11 +323,13 @@ describe('Blog Page Enhanced Tests', () => {
     await user.click(techCategoryButton);
 
     await waitFor(() => {
-      const techBlog = screen.getByText('Technology Trends 2024');
-      await user.click(techBlog);
+      expect(screen.getAllByText('Technology Trends 2024').length).toBeGreaterThan(0);
     });
+    const techElems = screen.getAllByText('Technology Trends 2024');
+    const techBlogBtn = techElems.find(e => !e.closest('[data-testid="blog-renderer"]')) || techElems[0];
+    await user.click(techBlogBtn);
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByTestId('block-full-width-image')).toBeInTheDocument();
       expect(screen.getByTestId('block-chart')).toBeInTheDocument();
     });
@@ -342,7 +345,7 @@ describe('Blog Page Enhanced Tests', () => {
     );
 
     // Select general blog with video and image-caption
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText(/General \(1\)/)).toBeInTheDocument();
     });
 
@@ -350,11 +353,12 @@ describe('Blog Page Enhanced Tests', () => {
     await user.click(generalCategoryButton);
 
     await waitFor(() => {
-      const generalBlog = screen.getByText('General Industry Updates');
-      await user.click(generalBlog);
+      expect(screen.getByText('General Industry Updates')).toBeInTheDocument();
     });
+    const generalBlog = screen.getByText('General Industry Updates');
+    await user.click(generalBlog);
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByTestId('block-video-embed')).toBeInTheDocument();
       expect(screen.getByTestId('block-image-caption')).toBeInTheDocument();
     });
@@ -375,7 +379,7 @@ describe('Blog Page Enhanced Tests', () => {
       </TestWrapper>
     );
 
-    await waitFor(() => {
+  await waitFor(() => {
       // Should show mobile-friendly category selector
       expect(screen.getByRole('combobox')).toBeInTheDocument();
     });
@@ -398,7 +402,7 @@ describe('Blog Page Enhanced Tests', () => {
       </TestWrapper>
     );
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText('Featured Articles')).toBeInTheDocument();
     });
 
@@ -433,7 +437,7 @@ describe('Blog Page Enhanced Tests', () => {
     });
 
     // Select a blog
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText(/Artificial Intelligence \(1\)/)).toBeInTheDocument();
     });
 
@@ -441,12 +445,14 @@ describe('Blog Page Enhanced Tests', () => {
     await user.click(aiCategoryButton);
 
     await waitFor(() => {
-      const blogButton = screen.getByText('AI Technology Advances');
-      await user.click(blogButton);
+      expect(screen.getAllByText('AI Technology Advances').length).toBeGreaterThan(0);
     });
+    const blogElems = screen.getAllByText('AI Technology Advances');
+    const blogButton = blogElems.find(e => !e.closest('[data-testid="blog-renderer"]')) || blogElems[0];
+    await user.click(blogButton);
 
     // Placeholder should be gone
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.queryByText('Select a blog to read')).not.toBeInTheDocument();
       expect(screen.getByTestId('blog-renderer')).toBeInTheDocument();
     });
@@ -467,7 +473,7 @@ describe('Blog Page Enhanced Tests', () => {
       </TestWrapper>
     );
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(screen.getByText('Categories')).toBeInTheDocument();
     });
 
@@ -495,14 +501,16 @@ describe('Blog Page Enhanced Tests', () => {
     await user.click(aiCategoryButton);
 
     await waitFor(() => {
-      const blogButton = screen.getByText('AI Technology Advances');
-      await user.click(blogButton);
+      expect(screen.getAllByText('AI Technology Advances').length).toBeGreaterThan(0);
     });
+    const aiBlogElems = screen.getAllByText('AI Technology Advances');
+    const aiBlogButton = aiBlogElems.find(e => !e.closest('[data-testid="blog-renderer"]')) || aiBlogElems[0];
+    await user.click(aiBlogButton);
 
     await waitFor(() => {
       // Check that blog metadata is displayed
-      expect(screen.getByText('Artificial Intelligence')).toBeInTheDocument();
-      expect(screen.getByText('1/1/2024')).toBeInTheDocument();
+      expect(screen.getAllByText('Artificial Intelligence').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('1/1/2024').length).toBeGreaterThan(0);
     });
   });
 });

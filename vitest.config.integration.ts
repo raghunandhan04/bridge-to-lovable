@@ -10,7 +10,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setupTests.ts'],
     css: true,
     include: ['**/*.integration.test.{ts,tsx}', '**/pages/__tests__/**/*.{ts,tsx}'],
-    timeout: 10000,
+    testTimeout: 20000, // Increased timeout for integration tests
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

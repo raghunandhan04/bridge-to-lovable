@@ -162,8 +162,9 @@ describe('BlogRenderer Component', () => {
 
     expect(screen.getByText('This text appears on the right side')).toBeInTheDocument();
     
-    const leftImage = screen.getByAltText('');
-    expect(leftImage).toHaveAttribute('src', 'https://left-image.jpg');
+  const leftImages = screen.getAllByRole('img');
+  const leftImage = leftImages.find(i => i.getAttribute('src') === 'https://left-image.jpg');
+  expect(leftImage).toBeDefined();
   });
 
   it('renders right-image-left-text layout correctly', () => {
@@ -175,8 +176,9 @@ describe('BlogRenderer Component', () => {
 
     expect(screen.getByText('This text appears on the left side')).toBeInTheDocument();
     
-    const rightImage = screen.getByAltText('');
-    expect(rightImage).toHaveAttribute('src', 'https://right-image.jpg');
+  const rightImages = screen.getAllByRole('img');
+  const rightImage = rightImages.find(i => i.getAttribute('src') === 'https://right-image.jpg');
+  expect(rightImage).toBeDefined();
   });
 
   it('renders full-width-image with caption', () => {
@@ -186,8 +188,9 @@ describe('BlogRenderer Component', () => {
       </TestWrapper>
     );
 
-    const fullWidthImage = screen.getByAltText('');
-    expect(fullWidthImage).toHaveAttribute('src', 'https://full-width-image.jpg');
+  const fullWidthImages = screen.getAllByRole('img');
+  const fullWidthImage = fullWidthImages.find(i => i.getAttribute('src') === 'https://full-width-image.jpg');
+  expect(fullWidthImage).toBeDefined();
     expect(screen.getByText('Full width image caption')).toBeInTheDocument();
   });
 
@@ -208,8 +211,9 @@ describe('BlogRenderer Component', () => {
       </TestWrapper>
     );
 
-    const captionImage = screen.getByAltText('');
-    expect(captionImage).toHaveAttribute('src', 'https://caption-image.jpg');
+  const captionImages = screen.getAllByRole('img');
+  const captionImage = captionImages.find(i => i.getAttribute('src') === 'https://caption-image.jpg');
+  expect(captionImage).toBeDefined();
     expect(screen.getByText('Image with caption below')).toBeInTheDocument();
   });
 
@@ -220,8 +224,8 @@ describe('BlogRenderer Component', () => {
       </TestWrapper>
     );
 
-    const iframe = screen.getByTitle('');
-    expect(iframe).toHaveAttribute('src', 'https://www.youtube.com/embed/testVideo');
+  const iframes = screen.getAllByTitle('https://www.youtube.com/embed/testVideo');
+  expect(iframes[0]).toHaveAttribute('src', 'https://www.youtube.com/embed/testVideo');
   });
 
   it('renders table with headers and data', () => {

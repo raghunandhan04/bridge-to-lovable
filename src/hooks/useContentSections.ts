@@ -21,11 +21,16 @@ export const useContentSections = (pagePath: string = '') => {
 
   useEffect(() => {
     fetchSections();
-    
+
+    // Only subscribe in browser environments. Avoid running realtime
+    // subscription logic in test/node environments where `window` may not exist.
+    if (typeof window === 'undefined') return;
+
     // Subscribe to real-time updates
     const channel = supabase
       .channel('content-sections-changes')
-      .on('postgres_changes', 
+      .on(
+        'postgres_changes',
         { event: '*', schema: 'public', table: 'content_sections' },
         () => {
           fetchSections();
@@ -34,7 +39,11 @@ export const useContentSections = (pagePath: string = '') => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        supabase.removeChannel(channel);
+      } catch (e) {
+        // swallow during teardown in non-browser environments
+      }
     };
   }, [pagePath]);
 

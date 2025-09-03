@@ -34,6 +34,21 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
 };
 
+// Polyfill hasPointerCapture for JSDOM (some Radix primitives call it)
+if (typeof (Element.prototype as any).hasPointerCapture !== 'function') {
+  (Element.prototype as any).hasPointerCapture = function () { return false; };
+}
+
+// Polyfill scrollIntoView used by some UI primitives
+if (typeof (Element.prototype as any).scrollIntoView !== 'function') {
+  (Element.prototype as any).scrollIntoView = function () { /* no-op for tests */ };
+}
+
+// Ensure global.window exists in all test contexts
+if (typeof (global as any).window === 'undefined') {
+  (global as any).window = global;
+}
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
