@@ -81,34 +81,7 @@ const LiveWebsitePreview = () => {
     };
   }, [isEditMode, currentPage, sections, attachEditListeners, removeEditListeners]);
 
-  const attachEditListeners = useCallback(() => {
-    if (!previewRef.current) return;
-
-    // First, handle existing sections with data-section-id
-    const existingSections = previewRef.current.querySelectorAll('[data-section-id]');
-    existingSections.forEach((element) => {
-      const htmlElement = element as HTMLElement;
-      attachElementListener(htmlElement);
-    });
-
-    // Then, add data attributes to common editable elements that don't have them
-    const textElements = previewRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6, p:not([data-section-id])');
-    textElements.forEach((element, index) => {
-      const htmlElement = element as HTMLElement;
-      
-      // Skip if already has data attributes or is inside a section that has them
-      if (htmlElement.closest('[data-section-id]')) return;
-      
-      // Add temporary data attributes for editing
-      htmlElement.setAttribute('data-temp-edit', 'true');
-      htmlElement.setAttribute('data-temp-id', `temp-${index}`);
-      htmlElement.setAttribute('data-field', htmlElement.tagName.toLowerCase().startsWith('h') ? 'title' : 'content');
-      
-      attachElementListener(htmlElement);
-    });
-  };
-
-  const attachElementListener = (htmlElement: HTMLElement) => {
+  const attachElementListener = useCallback((htmlElement: HTMLElement) => {
     htmlElement.style.cursor = 'pointer';
     htmlElement.style.outline = '2px dashed transparent';
     htmlElement.style.transition = 'outline-color 0.2s ease';
@@ -139,7 +112,34 @@ const LiveWebsitePreview = () => {
       mouseenter: handleMouseEnter,
       mouseleave: handleMouseLeave
     };
-  }, []);
+  }, [handleElementClick]);
+
+  const attachEditListeners = useCallback(() => {
+    if (!previewRef.current) return;
+
+    // First, handle existing sections with data-section-id
+    const existingSections = previewRef.current.querySelectorAll('[data-section-id]');
+    existingSections.forEach((element) => {
+      const htmlElement = element as HTMLElement;
+      attachElementListener(htmlElement);
+    });
+
+    // Then, add data attributes to common editable elements that don't have them
+    const textElements = previewRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6, p:not([data-section-id])');
+    textElements.forEach((element, index) => {
+      const htmlElement = element as HTMLElement;
+      
+      // Skip if already has data attributes or is inside a section that has them
+      if (htmlElement.closest('[data-section-id]')) return;
+      
+      // Add temporary data attributes for editing
+      htmlElement.setAttribute('data-temp-edit', 'true');
+      htmlElement.setAttribute('data-temp-id', `temp-${index}`);
+      htmlElement.setAttribute('data-field', htmlElement.tagName.toLowerCase().startsWith('h') ? 'title' : 'content');
+      
+      attachElementListener(htmlElement);
+    });
+  }, [attachElementListener]);
 
   const removeEditListeners = useCallback(() => {
     if (!previewRef.current) return;
