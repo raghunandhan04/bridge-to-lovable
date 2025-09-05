@@ -43,6 +43,16 @@ jobs:
             exit 1
           fi
           
+          # Test token access first
+          echo "Testing token access..."
+          git ls-remote https://x-access-token:${WORK_TOKEN}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git > /dev/null 2>&1 || {
+            echo "ERROR: Unable to access target repository. Check if:"
+            echo "1. Repository exists: raghunandhan04work/Hibiz-Ai-Website-Final"
+            echo "2. WORK_TOKEN has correct permissions"
+            echo "3. Token is from the raghunandhan04work account"
+            exit 1
+          }
+          
           # Clone the target repository
           echo "Cloning target repository..."
           git clone https://x-access-token:${WORK_TOKEN}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git target-repo
@@ -51,7 +61,7 @@ jobs:
           
           # Copy all files (excluding .git)
           echo "Copying files..."
-          rsync -av --exclude='.git' --exclude='target-repo' ./ target-repo/
+          rsync -av --exclude='.git' --exclude='target-repo' --exclude='.github' ./ target-repo/
           
           echo "Files copied, checking target directory..."
           cd target-repo

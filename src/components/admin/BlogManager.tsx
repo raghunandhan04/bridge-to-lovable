@@ -47,7 +47,7 @@ interface Blog {
   featured: boolean;
   featured_image_url: string;
   created_at: string;
-  blog_structure?: any; // Use any to handle Supabase Json type
+  blog_structure?: BlogStructure | null; // Use proper type instead of any
 }
 
 interface BlogManagerProps {
@@ -55,7 +55,7 @@ interface BlogManagerProps {
 }
 
 // Local placeholder for DocumentUpload used in upload mode (keeps tests stable)
-const LocalDocumentUpload: React.FC<{ onDocumentParsed: (doc: any) => void; className?: string }> = ({ onDocumentParsed }) => {
+const LocalDocumentUpload: React.FC<{ onDocumentParsed: (doc: BlogStructure) => void; className?: string }> = ({ onDocumentParsed }) => {
   return (
     <div>
       <p className="text-sm text-muted-foreground">Document upload placeholder</p>
@@ -188,7 +188,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
 
       if (error) throw error;
       setBlogs((data || []) as Blog[]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to fetch blogs",
@@ -308,10 +308,10 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       
       // Clear timeout if save successful
       clearTimeout(saveTimeout);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to save blog",
         variant: "destructive",
       });
       // Clear timeout if save failed
@@ -374,10 +374,10 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         .eq('id', id);
       if (error) throw error;
       toast({ title: "Blog deleted successfully!" });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to delete blog",
         variant: "destructive",
       });
     }
@@ -394,10 +394,10 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         description: "Static blogs have been migrated to the database"
       });
       fetchBlogs(); // Refresh the list
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Migration failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Migration failed",
         variant: "destructive",
       });
     } finally {
@@ -416,10 +416,10 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         description: "2 new featured articles have been added to the database"
       });
       fetchBlogs(); // Refresh the list
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Failed to add featured articles",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to add featured articles",
         variant: "destructive",
       });
     } finally {
