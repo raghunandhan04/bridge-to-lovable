@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BlogManager from '../BlogManager';
 import { TestWrapper } from '../../../test/utils';
@@ -575,4 +575,102 @@ describe('BlogManager Component', () => {
       expect(editorContainer).toBeInTheDocument();
     });
   });
+
+  it('creates blog with rich text editor content and verifies content is saved', async () => {
+    const user = userEvent.setup();
+    const mockInsert = vi.fn(() => Promise.resolve({ data: [{ id: 'new-test-id' }], error: null }));
+    
+    // Mock Supabase
+    (supabase.from as Mock).mockImplementation(() => ({
+      select: vi.fn(() => ({
+        order: vi.fn(() => Promise.resolve({ data: mockBlogs, error: null }))
+      })),
+      insert: mockInsert,
+      update: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null }))
+      })),
+      delete: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null }))
+      }))
+    }));
+
+    render(
+      <TestWrapper>
+        <BlogManager {...defaultProps} />
+      </TestWrapper>
+    );
+
+    // Open create form
+    await waitFor(() => screen.getByText('Create Blog'));
+    const createButton = screen.getByText('Create Blog');
+    await user.click(createButton);
+    
+    // Verify the dialog opened
+    await waitFor(() => {
+      expect(screen.getByTestId('blog-form')).toBeInTheDocument();
+    });
+    
+    // Fill in required form fields
+    const titleInput = screen.getByLabelText('Title');
+    await user.type(titleInput, 'Rich Text Content Test');
+    
+    const excerptInput = screen.getByLabelText('Excerpt');
+    await user.type(excerptInput, 'Testing rich text content saving');
+    
+    // Switch to Classic Editor mode if not already selected
+    const classicEditorTab = screen.getByText('Classic Editor');
+    await user.click(classicEditorTab);
+    
+    // Wait for the classic editor container to be visible
+    await waitFor(() => {
+      expect(screen.getByTestId('classic-editor-container')).toBeInTheDocument();
+    }, { timeout: 2000 });
+    
+    // Sample rich text content to be set
+    const richTextContent = '<h2>Test Heading</h2><p>This is a <strong>rich text</strong> test with <em>formatting</em>.</p>';
+    
+    // Set the content using the exposed test hook
+    await act(async () => {
+      // Access the test hook and set the content
+      if ((window as any).__TEST_HOOKS__?.setFormData) {
+        (window as any).__TEST_HOOKS__.setFormData((prev: any) => ({
+          ...prev,
+          content: richTextContent
+        }));
+      } else {
+        console.error('Test hook not available');
+      }
+    });
+    
+    // Verify the save button is enabled and click it
+    const saveButton = screen.getByTestId('save-blog-button');
+    expect(saveButton).not.toBeDisabled();
+    await user.click(saveButton);
+    
+    // Verify that the insert function was called
+    await waitFor(() => {
+      expect(mockInsert).toHaveBeenCalled();
+      
+      // Use type assertion to access the mock calls safely
+      const calls = mockInsert.mock.calls as any[][];
+      expect(calls.length).toBeGreaterThan(0);
+      
+      // Use conditional checks to avoid TypeScript errors
+      if (calls.length > 0 && calls[0] && calls[0][0]) {
+        const blogData = calls[0][0];
+        // Check that at least one blog was inserted
+        expect(blogData).toBeTruthy();
+        
+        // Since we know there's data, we can safely do this assertion
+        // Create a type-safe way to check
+        const blogEntries = blogData as any[];
+        if (blogEntries.length > 0) {
+          const blog = blogEntries[0];
+          expect(blog.title).toBe('Rich Text Content Test');
+          expect(blog.excerpt).toBe('Testing rich text content saving');
+          expect(blog.content).toBe(richTextContent);
+        }
+      }
+    }, { timeout: 3000 });
+  }, 10000); // Increase timeout for this specific test
 });

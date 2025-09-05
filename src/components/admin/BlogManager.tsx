@@ -88,6 +88,17 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     featured_image_url: ''
   });
   
+  // Expose the setFormData function for testing
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && (window as any).__TEST_HOOKS__) {
+      (window as any).__TEST_HOOKS__.setFormData = setFormData;
+    }
+    return () => {
+      if (process.env.NODE_ENV !== 'production' && (window as any).__TEST_HOOKS__) {
+        (window as any).__TEST_HOOKS__.setFormData = null;
+      }
+    };
+  }, []);
   const [blogStructure, setBlogStructure] = useState<BlogStructure>({
     title: '',
     featuredImage: '',
@@ -511,7 +522,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="blog-manager">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 rounded-lg border">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -637,14 +648,14 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
               setEditingBlog(null);
               resetForm();
             }
-            }}>
+            }} data-testid="blog-dialog">
               <DialogTrigger asChild>
                 <Button onClick={() => setShowCreateForm(true)} className="bg-primary hover:bg-primary/90">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Blog
                 </Button>
               </DialogTrigger>
-           <DialogContent className="max-w-6xl w-[95vw] h-[95vh] flex flex-col p-0">
+           <DialogContent className="max-w-6xl w-[95vw] h-[95vh] flex flex-col p-0" data-testid="blog-form">
              <DialogHeader className="p-6 pb-4 border-b">
                <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                  <Edit className="w-6 h-6" />
@@ -758,7 +769,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                               </div>
 
                               {editorMode === 'classic' ? (
-                                <div>
+                                <div data-testid="classic-editor-container">
                                   <div className="border rounded-lg">
                                      <AdvancedRichTextEditor
                                        value={formData.content}
@@ -1068,6 +1079,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                    onClick={handleSave}
                    className="bg-primary hover:bg-primary/90"
                    disabled={formData.title.trim() === ''}
+                   data-testid="save-blog-button"
                  >
                    <Save className="w-4 h-4 mr-2" />
                    Save Blog
@@ -1195,5 +1207,12 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     </div>
   );
 };
+
+// Expose test hooks in development/test environment
+if (process.env.NODE_ENV !== 'production') {
+  (window as any).__TEST_HOOKS__ = {
+    setFormData: null
+  };
+}
 
 export default BlogManager;

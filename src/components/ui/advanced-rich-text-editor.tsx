@@ -667,6 +667,7 @@ const AdvancedRichTextEditor: React.FC<AdvancedRichTextEditorProps> = ({
                 formats={formats}
                 placeholder={placeholder}
                 className="border-none h-full"
+                data-testid="quill-editor"
               />
             </div>
           )}
