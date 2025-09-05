@@ -3,28 +3,42 @@ name: Mirror to Work Repo
 on:
   push:
     branches:
-      - main   # change if your default branch is different
+      - main
 
 jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout full history
+      - name: Checkout source repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # fetch all history and tags
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Git
+      - name: Setup Git config
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git config --global init.defaultBranch main
 
-      - name: Add work remote
+      - name: Mirror to work repository
+        env:
+          WORK_TOKEN: ${{ secrets.WORK_TOKEN }}
         run: |
-          git remote add work https://x-access-token:${{ secrets.WORK_TOKEN }}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git
+          # Clone the target repository
+          git clone https://x-access-token:${WORK_TOKEN}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git target-repo
 
-      - name: Push to work repo
-        run: |
-          git push work main:main --force
+          # Copy all files (excluding .git)
+          rsync -av --exclude='.git' ./ target-repo/
 
+          # Commit and push changes
+          cd target-repo
+          git add .
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to sync"
+          else
+            git commit -m "Sync from source repository - $(date)"
+            git push origin main
+          fi
