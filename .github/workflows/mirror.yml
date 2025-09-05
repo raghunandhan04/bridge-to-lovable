@@ -13,6 +13,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0   # fetch all history and tags
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Git
         run: |
@@ -24,5 +25,6 @@ jobs:
           git remote add work https://x-access-token:${{ secrets.WORK_TOKEN }}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git
 
       - name: Push to work repo
-        run: git push --mirror work
+        run: |
+          git push work main:main --force
 
