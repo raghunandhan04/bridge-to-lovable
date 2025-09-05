@@ -315,7 +315,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         variant: "destructive",
       });
       // Clear timeout if save failed
-      clearTimeout(saveTimeout);
+      clearTimeout(saveTimeoutRef.current);
     }
   };
 

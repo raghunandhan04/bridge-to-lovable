@@ -141,6 +141,20 @@ const LiveWebsitePreview = () => {
     });
   }, [attachElementListener]);
 
+  useEffect(() => {
+    if (isEditMode && previewRef.current) {
+      attachEditListeners();
+    } else if (previewRef.current) {
+      removeEditListeners();
+    }
+
+    return () => {
+      if (previewRef.current) {
+        removeEditListeners();
+      }
+    };
+  }, [isEditMode, currentPage, sections, attachEditListeners, removeEditListeners]);
+
   const removeEditListeners = useCallback(() => {
     if (!previewRef.current) return;
 
