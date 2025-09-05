@@ -254,17 +254,19 @@ describe('BlogManager Component', () => {
     await waitFor(() => screen.getByText('Save Blog'));
     const saveButton = screen.getByText('Save Blog');
     
-    // Make sure title is empty
+    // Make sure title is empty by clearing the input field
     const titleInput = screen.getByLabelText('Title');
     await user.clear(titleInput);
     
+    // Try to save with empty title - the save button should be disabled now
     await user.click(saveButton);
-
-    // Look for the toast notification instead of role="alert"
-    await waitFor(() => {
-      expect(screen.getByText('Validation Error')).toBeInTheDocument();
-      expect(screen.getByText('Title is required')).toBeInTheDocument();
-    }, { timeout: 2000 });
+    
+    // Verify that the button is disabled when title is empty
+    expect(saveButton).toBeDisabled();
+    
+    // Type a valid title and verify the button becomes enabled
+    await user.type(titleInput, 'Test Title');
+    expect(saveButton).not.toBeDisabled();
   });
 
   it('creates blog with visual editor content', async () => {

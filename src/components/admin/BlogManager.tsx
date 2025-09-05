@@ -214,6 +214,11 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         description: "Title is required",
         variant: "destructive",
       });
+      
+      // Focus the title input for better accessibility
+      const titleInput = document.getElementById('title');
+      if (titleInput) titleInput.focus();
+      
       return;
     }
 
@@ -698,9 +703,12 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                                }}
                                placeholder="Enter an engaging blog title..."
                                className="text-lg mt-2"
+                               aria-required="true"
                              />
                              {validationError && (
-                               <p role="alert" className="mt-1 text-sm text-destructive">{validationError}</p>
+                               <div role="alert" className="mt-2 p-2 border border-destructive/50 bg-destructive/10 rounded text-sm text-destructive font-medium">
+                                 {validationError}
+                               </div>
                              )}
                            </div>
                            
