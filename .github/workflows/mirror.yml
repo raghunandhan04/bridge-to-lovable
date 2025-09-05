@@ -3,19 +3,22 @@ name: Mirror to Work Repo
 on:
   push:
     branches:
-      - main        # change if your default branch isn't main
-    tags:
-      - '*'         # also mirror tag pushes
-  workflow_dispatch: # allow manual runs from the Actions tab
-
-permissions:
-  contents: read    # we use PAT for pushing, so this is enough
+      - main   # or whichever branch you want mirrored
 
 jobs:
-  mirror:
+  sync:
     runs-on: ubuntu-latest
-
     steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Push to Work Repo
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote add work https://${{ secrets.WORK_TOKEN }}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git
+          git push --mirror work
+
       - name: Checkout full history
         uses: actions/checkout@v4
         with:
