@@ -1,0 +1,51 @@
+name: Debug Mirror Push
+
+on:
+  workflow_dispatch:   # run manually from Actions UI
+  push:
+    branches:
+      - main
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Print git version and remotes (sanity)
+        run: |
+          echo "GIT VERSION:"
+          git --version
+          echo "CURRENT REMOTES BEFORE:"
+          git remote -v || true
+          echo "http.extraheader:"
+          git config --get-all http.https://github.com/.extraheader || true
+
+      - name: Clear GH auth header (important)
+        run: |
+          git config --global --unset-all http.https://github.com/.extraheader || true
+          echo "Cleared extraheader."
+
+      - name: Show repo URL and test ls-remote (this uses the secret; token will be masked)
+        env:
+          WORK_TOKEN: ${{ secrets.WORK_TOKEN }}
+        run: |
+          set -o pipefail
+          DST="https://x-access-token:${WORK_TOKEN}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git"
+          echo "Testing access to destination (git ls-remote will show HTTP error if unauthorized)"
+          git ls-remote "$DST" 2>&1 | sed -n '1,200p' || true
+          echo "Exit code for ls-remote: $?"
+
+      - name: Add remote then show remotes
+        run: |
+          git remote remove work || true
+          git remote add work https://x-access-token:${{ secrets.WORK_TOKEN }}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git
+          git remote -v
+
+      - name: Attempt mirror push (will show full error)
+        run: |
+          set -euxo pipefail
+          git push --mirror work
