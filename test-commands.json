@@ -1,0 +1,11 @@
+{
+  "name": "run-admin-blog-tests",
+  "scripts": {
+    "test:admin-blog": "playwright test admin.blog --headed",
+    "test:admin-blog-creation": "playwright test admin.blog.creation.spec.ts --headed",
+    "test:admin-blog-management": "playwright test admin.blog.management.spec.ts --headed",
+    "test:admin-blog-debug": "playwright test admin.blog --debug",
+    "test:admin-blog-ci": "playwright test admin.blog --reporter=json"
+  },
+  "description": "Test commands for admin blog functionality"
+}
