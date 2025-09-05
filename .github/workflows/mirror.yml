@@ -3,39 +3,26 @@ name: Mirror to Work Repo
 on:
   push:
     branches:
-      - main   # change if your default branch is not main
+      - main   # change if your default branch is different
 
 jobs:
-  sync:
+  mirror:
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout full repo history (all commits + tags)
-      - name: Checkout source
+      - name: Checkout full history
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0   # fetch all history and tags
 
-      # 2. Configure Git identity
-      - name: Setup Git
+      - name: Set up Git
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-      # 3. Add work repo as remote
       - name: Add work remote
         run: |
           git remote add work https://x-access-token:${{ secrets.WORK_TOKEN }}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git
 
-      # 4. Push everything (branches, tags, refs) to work repo
-      - name: Mirror to work repo
+      - name: Push to work repo
         run: git push --mirror work
-
-      # 5. Optional: If using Git LFS (large files)
-      - name: Push Git LFS (optional)
-        run: |
-          if command -v git-lfs >/dev/null 2>&1; then
-            git lfs install
-            git lfs fetch --all
-            git lfs push --all work
-          fi
 
