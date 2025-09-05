@@ -107,6 +107,18 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     blocks: []
   });
   
+  // Expose the setBlogStructure function for testing
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && (window as any).__TEST_HOOKS__) {
+      (window as any).__TEST_HOOKS__.setBlogStructure = setBlogStructure;
+    }
+    return () => {
+      if (process.env.NODE_ENV !== 'production' && (window as any).__TEST_HOOKS__) {
+        (window as any).__TEST_HOOKS__.setBlogStructure = null;
+      }
+    };
+  }, []);
+  
   const [editorMode, setEditorMode] = useState<'classic' | 'visual' | 'upload'>('visual');
   const { toast } = useToast();
   const [migrating, setMigrating] = useState(false);

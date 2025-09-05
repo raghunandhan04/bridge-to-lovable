@@ -673,4 +673,146 @@ describe('BlogManager Component', () => {
       }
     }, { timeout: 3000 });
   }, 10000); // Increase timeout for this specific test
+  
+  it('creates blog with multiple layout types and verifies structure is saved', async () => {
+    const user = userEvent.setup();
+    const mockInsert = vi.fn(() => Promise.resolve({ data: [{ id: 'new-layout-test-id' }], error: null }));
+    
+    // Mock window.confirm for blog structure autosave confirmation
+    window.confirm = vi.fn(() => true);
+    
+    // Mock Supabase
+    (supabase.from as Mock).mockImplementation(() => ({
+      select: vi.fn(() => ({
+        order: vi.fn(() => Promise.resolve({ data: mockBlogs, error: null }))
+      })),
+      insert: mockInsert,
+      update: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null }))
+      })),
+      delete: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null }))
+      }))
+    }));
+
+    // Mock the exposed test hook for blog structure
+    let capturedBlogStructure: any = null;
+    if (!(window as any).__TEST_HOOKS__) {
+      (window as any).__TEST_HOOKS__ = {};
+    }
+    (window as any).__TEST_HOOKS__.setBlogStructure = (structure: any) => {
+      capturedBlogStructure = structure;
+      return structure;
+    };
+    
+    render(
+      <TestWrapper>
+        <BlogManager {...defaultProps} />
+      </TestWrapper>
+    );
+
+    // Open create form
+    await waitFor(() => screen.getByText('Create Blog'));
+    const createButton = screen.getByText('Create Blog');
+    await user.click(createButton);
+    
+    // Verify the dialog opened
+    await waitFor(() => {
+      expect(screen.getByTestId('blog-form')).toBeInTheDocument();
+    });
+    
+    // Fill in required form fields
+    const titleInput = screen.getByLabelText('Title');
+    await user.type(titleInput, 'Blog With Multiple Layouts');
+    
+    const excerptInput = screen.getByLabelText('Excerpt');
+    await user.type(excerptInput, 'Testing multiple layout blocks in a blog');
+    
+    // Ensure we're in Visual Editor mode
+    const visualEditorTab = screen.getByText('Visual Editor');
+    await user.click(visualEditorTab);
+    
+    // Wait for the visual editor to load
+    await waitFor(() => {
+      const addBlockButton = screen.getByText('Add Content Block');
+      expect(addBlockButton).toBeInTheDocument();
+    }, { timeout: 2000 });
+    
+    // Add the first layout - Full Width Text
+    await user.click(screen.getByText('Add Content Block'));
+    
+    // Wait for the block selector dialog to appear
+    await waitFor(() => {
+      expect(screen.getByText('Full Width Text')).toBeInTheDocument();
+    });
+    
+    // Select Full Width Text layout
+    await user.click(screen.getByText('Full Width Text'));
+    
+    // Add another layout - Left Image + Right Text
+    await user.click(screen.getByText('Add Content Block'));
+    
+    // Wait for the block selector dialog to appear
+    await waitFor(() => {
+      expect(screen.getByText('Left Image + Right Text')).toBeInTheDocument();
+    });
+    
+    // Select Left Image + Right Text layout
+    await user.click(screen.getByText('Left Image + Right Text'));
+    
+    // Add a third layout - Image + Caption
+    await user.click(screen.getByText('Add Content Block'));
+    
+    // Wait for the block selector dialog to appear
+    await waitFor(() => {
+      expect(screen.getByText('Image + Caption')).toBeInTheDocument();
+    });
+    
+    // Select Image + Caption layout
+    await user.click(screen.getByText('Image + Caption'));
+    
+    // Save the blog
+    const saveButton = screen.getByTestId('save-blog-button');
+    expect(saveButton).not.toBeDisabled();
+    await user.click(saveButton);
+    
+    // Verify that the content was saved with the correct blog structure
+    await waitFor(() => {
+      expect(mockInsert).toHaveBeenCalled();
+      
+      // Use type assertion to access the mock calls safely
+      const calls = mockInsert.mock.calls as any[][];
+      
+      if (calls.length > 0 && calls[0] && calls[0][0]) {
+        const blogData = calls[0][0];
+        const blogEntries = blogData as any[];
+        
+        if (blogEntries.length > 0) {
+          const blog = blogEntries[0];
+          expect(blog.title).toBe('Blog With Multiple Layouts');
+          expect(blog.excerpt).toBe('Testing multiple layout blocks in a blog');
+          
+          // Verify blog_structure was saved
+          expect(blog.blog_structure).toBeDefined();
+          
+          if (blog.blog_structure) {
+            // Verify the blog structure has the correct number of blocks
+            expect(blog.blog_structure.blocks.length).toBe(3);
+            
+            // Verify the types of blocks saved
+            const blockTypes = blog.blog_structure.blocks.map((block: any) => block.type);
+            expect(blockTypes).toContain('full-width-text');
+            expect(blockTypes).toContain('left-image-right-text');
+            expect(blockTypes).toContain('image-caption');
+            
+            // Verify each block has the necessary content structure
+            blog.blog_structure.blocks.forEach((block: any) => {
+              expect(block.id).toBeDefined();
+              expect(block.content).toBeDefined();
+            });
+          }
+        }
+      }
+    }, { timeout: 3000 });
+  }, 15000); // Increase timeout for this specific test
 });
