@@ -70,16 +70,69 @@ const LiveWebsitePreview = () => {
     mobile: 'w-[375px] max-w-[375px]'
   };
 
-  useEffect(() => {
-    if (isEditMode && previewRef.current) {
-      attachEditListeners();
-    }
-    return () => {
-      if (previewRef.current) {
-        removeEditListeners();
+  const handleElementClick = useCallback((element: HTMLElement) => {
+    const sectionId = element.getAttribute('data-section-id');
+    const tempId = element.getAttribute('data-temp-id');
+    const field = element.getAttribute('data-field') || 'content';
+    
+    let value = '';
+    let actualSectionId = sectionId;
+
+    if (sectionId) {
+      // Existing section - get value from sections data
+      const section = sections.find(s => s.id === sectionId);
+      if (section) {
+        if (field === 'title') {
+          value = section.title;
+        } else if (field === 'content') {
+          value = section.content;
+        }
       }
-    };
-  }, [isEditMode, currentPage, sections, attachEditListeners, removeEditListeners]);
+    } else if (tempId) {
+      // Temporary element - get text content
+      value = element.textContent || '';
+      actualSectionId = tempId;
+    }
+
+    setEditingElement({
+      sectionId: actualSectionId || '',
+      field,
+      value,
+      element
+    });
+    
+    setEditValue(value);
+    setIsTextarea(value.length > 50 || value.includes('\n'));
+  }, [sections]);
+
+  const removeEditListeners = useCallback(() => {
+    if (!previewRef.current) return;
+
+    const allEditableElements = previewRef.current.querySelectorAll('[data-section-id], [data-temp-edit]');
+    
+    allEditableElements.forEach((element) => {
+      const htmlElement = element as HTMLElement;
+      const listeners = (htmlElement as any)._editListeners;
+      
+      if (listeners) {
+        htmlElement.removeEventListener('click', listeners.click);
+        htmlElement.removeEventListener('mouseenter', listeners.mouseenter);
+        htmlElement.removeEventListener('mouseleave', listeners.mouseleave);
+        delete (htmlElement as any)._editListeners;
+      }
+
+      htmlElement.style.cursor = '';
+      htmlElement.style.outline = '';
+      htmlElement.style.backgroundColor = '';
+      
+      // Remove temporary attributes
+      if (htmlElement.hasAttribute('data-temp-edit')) {
+        htmlElement.removeAttribute('data-temp-edit');
+        htmlElement.removeAttribute('data-temp-id');
+        htmlElement.removeAttribute('data-field');
+      }
+    });
+  }, []);
 
   const attachElementListener = useCallback((htmlElement: HTMLElement) => {
     htmlElement.style.cursor = 'pointer';
@@ -154,37 +207,6 @@ const LiveWebsitePreview = () => {
       }
     };
   }, [isEditMode, currentPage, sections, attachEditListeners, removeEditListeners]);
-
-  const removeEditListeners = useCallback(() => {
-    if (!previewRef.current) return;
-
-    const allEditableElements = previewRef.current.querySelectorAll('[data-section-id], [data-temp-edit]');
-    
-    allEditableElements.forEach((element) => {
-      const htmlElement = element as HTMLElement;
-      const listeners = (htmlElement as any)._editListeners;
-      
-      if (listeners) {
-        htmlElement.removeEventListener('click', listeners.click);
-        htmlElement.removeEventListener('mouseenter', listeners.mouseenter);
-        htmlElement.removeEventListener('mouseleave', listeners.mouseleave);
-        delete (htmlElement as any)._editListeners;
-      }
-
-      htmlElement.style.cursor = '';
-      htmlElement.style.outline = '';
-      htmlElement.style.backgroundColor = '';
-      
-      // Remove temporary attributes
-      if (htmlElement.hasAttribute('data-temp-edit')) {
-        htmlElement.removeAttribute('data-temp-edit');
-        htmlElement.removeAttribute('data-temp-id');
-        htmlElement.removeAttribute('data-field');
-      }
-    });
-  }, []);
-
-  const handleElementClick = (element: HTMLElement) => {
     const sectionId = element.getAttribute('data-section-id');
     const tempId = element.getAttribute('data-temp-id');
     const field = element.getAttribute('data-field') || 'content';

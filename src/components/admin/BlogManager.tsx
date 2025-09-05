@@ -59,7 +59,7 @@ const LocalDocumentUpload: React.FC<{ onDocumentParsed: (doc: BlogStructure) => 
   return (
     <div>
       <p className="text-sm text-muted-foreground">Document upload placeholder</p>
-      <button onClick={() => onDocumentParsed({ title: 'Imported Doc', excerpt: '', featuredImage: '', author: 'Auto', date: new Date().toISOString().split('T')[0], blocks: [] })}>
+      <button onClick={() => onDocumentParsed({ title: 'Imported Doc', featuredImage: '', author: 'Auto', date: new Date().toISOString().split('T')[0], blocks: [] })}>
         Parse Document
       </button>
     </div>
@@ -145,7 +145,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBlogs((data || []) as Blog[]);
+      setBlogs(data as unknown as Blog[] || []);
     } catch (error: unknown) {
       toast({
         title: "Error",
@@ -245,11 +245,12 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       return;
     }
 
+    // Explicitly set a timeout to prevent test hanging
+    let saveTimeoutId = setTimeout(() => {
+      console.log('Save operation timed out');
+    }, 3000);
+
     try {
-      // Explicitly set a timeout to prevent test hanging
-      const saveTimeout = setTimeout(() => {
-        console.log('Save operation timed out');
-      }, 3000);
 
       // Prepare blog data based on editor mode
       const blogData = {
@@ -261,7 +262,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       if (editorMode === 'visual') {
         const structuredData = {
           ...blogData,
-          blog_structure: blogStructure as unknown // Cast for Supabase JSON compatibility
+          blog_structure: blogStructure as any // Cast for Supabase JSON compatibility
         };
         
         // Convert structure to HTML content for backward compatibility
@@ -307,7 +308,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       setLastSaved(new Date());
       
       // Clear timeout if save successful
-      clearTimeout(saveTimeout);
+      clearTimeout(saveTimeoutId);
     } catch (error: unknown) {
       toast({
         title: "Error",
@@ -315,7 +316,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
         variant: "destructive",
       });
       // Clear timeout if save failed
-      clearTimeout(saveTimeoutRef.current);
+      clearTimeout(saveTimeoutId);
     }
   };
 
@@ -822,13 +823,13 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                                   <LocalDocumentUpload
                                     onDocumentParsed={(document) => {
                                       // Update form data with parsed document data
-                                      setFormData(prev => ({
-                                        ...prev,
-                                        title: document.title,
-                                        excerpt: document.excerpt,
-                                        slug: generateSlug(document.title),
-                                        featured_image_url: document.featuredImage
-                                      }));
+                                       setFormData(prev => ({
+                                         ...prev,
+                                         title: document.title,
+                                         excerpt: '',
+                                         slug: generateSlug(document.title),
+                                         featured_image_url: document.featuredImage
+                                       }));
                                       
                                       // Set the structured content in the visual editor
                                       setBlogStructure({

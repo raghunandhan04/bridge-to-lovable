@@ -238,6 +238,28 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
     ? contentSections 
     : contentSections.filter(section => section.page_path === selectedPage);
 
+  const fetchContentSections = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('content_sections')
+        .select('*')
+        .order('page_path', { ascending: true })
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setContentSections(data || []);
+    } catch (error: unknown) {
+      console.error('Error fetching content sections:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch content sections",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchContentSections();
     
@@ -256,27 +278,6 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
       supabase.removeChannel(channel);
     };
   }, [fetchContentSections]);
-
-  const fetchContentSections = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('content_sections')
-        .select('*')
-        .order('page_path', { ascending: true })
-        .order('display_order', { ascending: true });
-
-      if (error) throw error;
-      setContentSections(data || []);
-    } catch (error: unknown) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch content sections",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
 
   const handleSave = async () => {
     try {

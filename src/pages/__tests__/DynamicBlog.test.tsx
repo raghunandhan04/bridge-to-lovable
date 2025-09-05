@@ -6,7 +6,7 @@ import { TestWrapper } from '../../test/utils';
 import { supabase } from '../../integrations/supabase/client';
 
 // Mock react-router-dom but keep original exports (so BrowserRouter is available)
-vi.mock('react-router-dom', async (importOriginal) => {
+vi.mock('react-router-dom', async (importOriginal: any) => {
   const actual = await importOriginal();
   return {
     ...actual,
