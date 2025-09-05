@@ -37,6 +37,8 @@ const Home = () => {
   // Apply localStorage overrides when component mounts and listen for changes
   useEffect(() => {
     const applyStoredOverrides = () => {
+      if (typeof window === 'undefined' || !window.localStorage) return;
+      
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('static_override_')) {
           try {

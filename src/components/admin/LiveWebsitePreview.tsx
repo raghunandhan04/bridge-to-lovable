@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,9 +79,9 @@ const LiveWebsitePreview = () => {
         removeEditListeners();
       }
     };
-  }, [isEditMode, currentPage, sections]);
+  }, [isEditMode, currentPage, sections, attachEditListeners, removeEditListeners]);
 
-  const attachEditListeners = () => {
+  const attachEditListeners = useCallback(() => {
     if (!previewRef.current) return;
 
     // First, handle existing sections with data-section-id
@@ -139,9 +139,9 @@ const LiveWebsitePreview = () => {
       mouseenter: handleMouseEnter,
       mouseleave: handleMouseLeave
     };
-  };
+  }, []);
 
-  const removeEditListeners = () => {
+  const removeEditListeners = useCallback(() => {
     if (!previewRef.current) return;
 
     const allEditableElements = previewRef.current.querySelectorAll('[data-section-id], [data-temp-edit]');
@@ -168,7 +168,7 @@ const LiveWebsitePreview = () => {
         htmlElement.removeAttribute('data-field');
       }
     });
-  };
+  }, []);
 
   const handleElementClick = (element: HTMLElement) => {
     const sectionId = element.getAttribute('data-section-id');

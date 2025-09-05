@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -255,9 +255,9 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchContentSections]);
 
-  const fetchContentSections = async () => {
+  const fetchContentSections = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('content_sections')
@@ -267,7 +267,7 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
 
       if (error) throw error;
       setContentSections(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to fetch content sections",
@@ -276,7 +276,7 @@ const ContentManager: React.FC<ContentManagerProps> = ({ userRole }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleSave = async () => {
     try {

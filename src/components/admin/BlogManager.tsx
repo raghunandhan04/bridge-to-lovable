@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,12 +90,12 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   
   // Expose the setFormData function for testing
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' && (window as any).__TEST_HOOKS__) {
-      (window as any).__TEST_HOOKS__.setFormData = setFormData;
+    if (process.env.NODE_ENV !== 'production' && window.__TEST_HOOKS__) {
+      window.__TEST_HOOKS__.setFormData = setFormData;
     }
     return () => {
-      if (process.env.NODE_ENV !== 'production' && (window as any).__TEST_HOOKS__) {
-        (window as any).__TEST_HOOKS__.setFormData = null;
+      if (process.env.NODE_ENV !== 'production' && window.__TEST_HOOKS__) {
+        window.__TEST_HOOKS__.setFormData = null;
       }
     };
   }, []);
@@ -109,12 +109,12 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   
   // Expose the setBlogStructure function for testing
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' && (window as any).__TEST_HOOKS__) {
-      (window as any).__TEST_HOOKS__.setBlogStructure = setBlogStructure;
+    if (process.env.NODE_ENV !== 'production' && window.__TEST_HOOKS__) {
+      window.__TEST_HOOKS__.setBlogStructure = setBlogStructure;
     }
     return () => {
-      if (process.env.NODE_ENV !== 'production' && (window as any).__TEST_HOOKS__) {
-        (window as any).__TEST_HOOKS__.setBlogStructure = null;
+      if (process.env.NODE_ENV !== 'production' && window.__TEST_HOOKS__) {
+        window.__TEST_HOOKS__.setBlogStructure = null;
       }
     };
   }, []);
@@ -137,6 +137,26 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     { type: 'chart', name: 'Chart' }
   ];
 
+  const fetchBlogs = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blogs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setBlogs((data || []) as Blog[]);
+    } catch (error: unknown) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch blogs",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchBlogs();
 
@@ -154,7 +174,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchBlogs]);
 
   // Filter blogs based on search and filters
   useEffect(() => {
@@ -178,26 +198,6 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
 
     setFilteredBlogs(filtered);
   }, [blogs, searchTerm, statusFilter, categoryFilter]);
-
-  const fetchBlogs = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('blogs')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setBlogs((data || []) as Blog[]);
-    } catch (error: unknown) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch blogs",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const generateSlug = (title: string) => {
     return title
@@ -261,7 +261,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
       if (editorMode === 'visual') {
         const structuredData = {
           ...blogData,
-          blog_structure: blogStructure as any // Cast to any for Supabase JSON compatibility
+          blog_structure: blogStructure as unknown // Cast for Supabase JSON compatibility
         };
         
         // Convert structure to HTML content for backward compatibility
@@ -1222,7 +1222,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
 
 // Expose test hooks in development/test environment
 if (process.env.NODE_ENV !== 'production') {
-  (window as any).__TEST_HOOKS__ = {
+  window.__TEST_HOOKS__ = {
     setFormData: null
   };
 }

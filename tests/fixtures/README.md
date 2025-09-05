@@ -14,6 +14,7 @@ This directory contains test fixtures used in our E2E tests.
 These fixtures are used in Playwright tests to simulate file uploads and test image handling functionality.
 
 To add new fixtures:
+
 1. Place the file in this directory
 2. Reference it in tests using `tests/fixtures/filename.ext`
 3. Update this README with a description

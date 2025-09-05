@@ -34,15 +34,15 @@ jobs:
           WORK_TOKEN: ${{ secrets.WORK_TOKEN }}
         run: |
           set -e  # Exit on any error
-          
+
           echo "Starting mirror process..."
-          
+
           # Verify token exists
           if [ -z "$WORK_TOKEN" ]; then
             echo "ERROR: WORK_TOKEN is not set"
             exit 1
           fi
-          
+
           # Test token access first
           echo "Testing token access..."
           git ls-remote https://x-access-token:${WORK_TOKEN}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git > /dev/null 2>&1 || {
@@ -52,25 +52,25 @@ jobs:
             echo "3. Token is from the raghunandhan04work account"
             exit 1
           }
-          
+
           # Clone the target repository
           echo "Cloning target repository..."
           git clone https://x-access-token:${WORK_TOKEN}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git target-repo
-          
+
           echo "Target repo cloned successfully"
-          
+
           # Copy all files (excluding .git)
           echo "Copying files..."
           rsync -av --exclude='.git' --exclude='target-repo' --exclude='.github' ./ target-repo/
-          
+
           echo "Files copied, checking target directory..."
           cd target-repo
           ls -la
-          
+
           # Add all changes
           echo "Adding changes..."
           git add .
-          
+
           # Check if there are changes to commit
           if git diff --staged --quiet; then
             echo "No changes to sync"
