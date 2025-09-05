@@ -3,55 +3,26 @@ name: Mirror to Work Repo
 on:
   push:
     branches:
-      - main          # change if your default branch isn't main
-    tags:
-      - '*'           # mirror tag pushes too
-  workflow_dispatch:  # allow manual runs from Actions tab
-
-permissions:
-  contents: read      # we use our own PAT for pushing
+      - main   # change if your default branch is different
 
 jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      # 1) Checkout full history + tags
-      - name: Checkout source
+      - name: Checkout full history
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: 0   # fetch all history and tags
 
-      # 2) VERY IMPORTANT: remove the default GitHub auth header
-      #    otherwise your PAT won't be used for the other repo
-      - name: Clear GitHub auth header
-        run: |
-          git config --global --unset-all http.https://github.com/.extraheader || true
-
-      # 3) Configure git identity
-      - name: Configure git
+      - name: Set up Git
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-      # 4) Add destination remote using your WORK_TOKEN secret
       - name: Add work remote
         run: |
           git remote add work https://x-access-token:${{ secrets.WORK_TOKEN }}@github.com/raghunandhan04work/Hibiz-Ai-Website-Final.git
-          git remote -v
 
-      # 5) Push all refs (branches, tags, notes)
-      - name: Mirror push
-        run: |
-          set -euxo pipefail
-          git push --mirror work
-
-      # 6) Optional: if you use Git LFS, also mirror large files
-      - name: Push Git LFS (optional)
-        run: |
-          if command -v git-lfs >/dev/null 2>&1; then
-            git lfs install
-            git lfs fetch --all
-            git lfs push --all work
-          fi
+      - name: Push to work repo
+        run: git push --mirror work
 
