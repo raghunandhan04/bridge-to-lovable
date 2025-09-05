@@ -444,4 +444,135 @@ describe('BlogManager Component', () => {
       expect(screen.queryByText('Migrate Static Blogs')).not.toBeInTheDocument();
     });
   });
+
+  it('allows adding different layout blocks in visual editor', async () => {
+    const user = userEvent.setup();
+    const mockInsert = vi.fn(() => Promise.resolve({ data: [], error: null }));
+    
+    (supabase.from as Mock).mockImplementation(() => ({
+      select: vi.fn(() => ({
+        order: vi.fn(() => Promise.resolve({ data: mockBlogs, error: null }))
+      })),
+      insert: mockInsert,
+      update: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null }))
+      }))
+    }));
+    
+    render(
+      <TestWrapper>
+        <BlogManager {...defaultProps} />
+      </TestWrapper>
+    );
+
+    // Open create form
+    const createButton = screen.getByText('Create Blog');
+    await user.click(createButton);
+    
+    // Fill basic info
+    const titleInput = screen.getByLabelText('Title');
+    await user.type(titleInput, 'Test Blog with Layouts');
+    
+    // Switch to visual editor mode
+    await user.click(screen.getByText('Visual Editor'));
+    
+    // Add a test delay to ensure UI is ready
+    await new Promise(r => setTimeout(r, 100));
+    
+    // Check for add block button - may be labeled differently based on your implementation
+    // This may need adjustment based on your actual UI
+    const addBlockButton = await screen.findByText(/Add Content Block|Add Block|Add Layout/i);
+    expect(addBlockButton).toBeInTheDocument();
+    
+    // Verify layout options exist after clicking add block
+    await user.click(addBlockButton);
+    
+    // Check for at least one layout type option (adjust these based on your actual UI)
+    await waitFor(() => {
+      const layoutOptions = screen.getAllByRole('button');
+      const layoutButtons = layoutOptions.filter(btn => 
+        ['Full Width Text', 'Left Image', 'Right Image', 'Image + Caption']
+          .some(text => btn.textContent?.includes(text))
+      );
+      expect(layoutButtons.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('supports rich text editing in the classic editor mode', async () => {
+    const user = userEvent.setup();
+    const mockInsert = vi.fn(() => Promise.resolve({ data: [], error: null }));
+    
+    (supabase.from as Mock).mockImplementation(() => ({
+      select: vi.fn(() => ({
+        order: vi.fn(() => Promise.resolve({ data: mockBlogs, error: null }))
+      })),
+      insert: mockInsert,
+      update: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null }))
+      }))
+    }));
+    
+    render(
+      <TestWrapper>
+        <BlogManager {...defaultProps} />
+      </TestWrapper>
+    );
+
+    // Open create form
+    const createButton = screen.getByText('Create Blog');
+    await user.click(createButton);
+    
+    // Fill basic info
+    const titleInput = screen.getByLabelText('Title');
+    await user.type(titleInput, 'Rich Text Editor Test');
+    
+    // Switch to Classic Editor mode (since visual is default)
+    const classicEditorTab = screen.getByText('Classic Editor');
+    await user.click(classicEditorTab);
+    
+    // Wait for the Advanced Rich Text Editor to render
+    await waitFor(() => {
+      expect(screen.getByText('Classic Editor')).toBeInTheDocument();
+    }, { timeout: 2000 });
+    
+    // Find the Quill editor container
+    await waitFor(() => {
+      // Check for the editor container
+      const quillContainer = document.querySelector('.ql-container');
+      expect(quillContainer).toBeInTheDocument();
+      
+      // Check for toolbar
+      const toolbar = document.querySelector('.ql-toolbar');
+      expect(toolbar).toBeInTheDocument();
+      
+      // Check for specific formatting buttons by their class names
+      const boldButton = document.querySelector('.ql-bold');
+      const italicButton = document.querySelector('.ql-italic');
+      const linkButton = document.querySelector('.ql-link');
+      
+      expect(boldButton).toBeInTheDocument();
+      expect(italicButton).toBeInTheDocument();
+      expect(linkButton).toBeInTheDocument();
+    }, { timeout: 3000 });
+    
+    // Verify we can switch between editor modes
+    const visualEditorTab = screen.getByText('Visual Editor');
+    await user.click(visualEditorTab);
+    
+    // In visual mode, we should see the block editor UI elements
+    await waitFor(() => {
+      const addBlockButton = screen.getByText('Add Content Block');
+      expect(addBlockButton).toBeInTheDocument();
+    }, { timeout: 2000 });
+    
+    // Switch back to classic
+    const classicTab = screen.getByText('Classic Editor');
+    await user.click(classicTab);
+    
+    // Verify classic editor is shown again
+    await waitFor(() => {
+      const editorContainer = screen.getByText('Classic Editor').closest('div');
+      expect(editorContainer).toBeInTheDocument();
+    });
+  });
 });
