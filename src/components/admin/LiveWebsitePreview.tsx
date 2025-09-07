@@ -207,6 +207,8 @@ const LiveWebsitePreview = () => {
       }
     };
   }, [isEditMode, currentPage, sections, attachEditListeners, removeEditListeners]);
+
+  const handleEditClick = (element: HTMLElement) => {
     const sectionId = element.getAttribute('data-section-id');
     const tempId = element.getAttribute('data-temp-id');
     const field = element.getAttribute('data-field') || 'content';
