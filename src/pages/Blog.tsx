@@ -129,11 +129,11 @@ const Blog = () => {
           {/* Left Sidebar - Categories */}
           <div className="lg:col-span-1">
             {isMobile ? (
-              <div className="mb-4">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
+            <div className="mb-4">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory} data-testid="category-select">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">All Categories</SelectItem>
                     {categories.map((category) => (
@@ -145,10 +145,10 @@ const Blog = () => {
                 </Select>
               </div>
             ) : (
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="text-lg">Categories</CardTitle>
-                </CardHeader>
+          <Card className="h-full">
+            <CardHeader data-testid="categories-sidebar">
+              <CardTitle className="text-lg">Categories</CardTitle>
+            </CardHeader>
                 <CardContent className="p-0 overflow-y-auto h-[calc(100vh-300px)]">
                   {categories.map((category) => {
                     const categoryBlogs = getBlogsByCategory(category);
@@ -179,6 +179,7 @@ const Blog = () => {
                                 className={`w-full text-left p-3 rounded-lg text-sm hover:bg-background transition-colors ${
                                   selectedBlog?.id === blog.id ? 'bg-primary/10 border border-primary/20' : 'bg-background/50'
                                 }`}
+                                data-testid="blog-item"
                               >
                                 <div className="font-medium mb-1 line-clamp-2">{blog.title}</div>
                                 <div className="text-xs text-muted-foreground">
@@ -214,8 +215,8 @@ const Blog = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 overflow-y-auto h-[calc(100vh-400px)]">
-                  <div className="p-6">
-                    <BlogRenderer 
+                  <div className="p-6" data-testid="blog-content">
+                    <BlogRenderer
                       blog={{
                         title: selectedBlog.title,
                         content: selectedBlog.content,
@@ -244,10 +245,10 @@ const Blog = () => {
 
           {/* Right Sidebar - Featured Articles */}
           <div className="lg:col-span-1">
-            <Card className="h-full overflow-hidden">
-              <CardHeader>
-                <CardTitle className="text-lg">Featured Articles</CardTitle>
-              </CardHeader>
+          <Card className="h-full overflow-hidden" data-testid="featured-articles">
+            <CardHeader>
+              <CardTitle className="text-lg">Featured Articles</CardTitle>
+            </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-y-auto h-[calc(100vh-300px)]">
                   {categories.map((category) => {
@@ -266,6 +267,7 @@ const Blog = () => {
                             selectedBlog?.id === featuredBlog.id ? 'bg-primary/10 border border-primary/20' : ''
                           }`}
                           aria-label={`Featured: ${featuredBlog.title}`}
+                          data-testid="featured-article"
                         >
                           <h4 className="font-semibold mb-2 group-hover:text-primary transition-colors line-clamp-3">
                             {featuredBlog.title}

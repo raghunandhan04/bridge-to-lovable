@@ -36,6 +36,8 @@ import { migrateStaticBlogs } from '@/scripts/migrate-static-blogs';
 import { addFeaturedArticles } from '@/scripts/add-featured-articles';
 // Note: Using a lightweight local placeholder for DocumentUpload in tests
 
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+
 interface Blog {
   id: string;
   title: string;
@@ -124,6 +126,8 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   const [migrating, setMigrating] = useState(false);
   const [addingFeatured, setAddingFeatured] = useState(false);
   const [slugAuto, setSlugAuto] = useState(true);
+  const [validationError, setValidationError] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; blogId: string | null }>({ open: false, blogId: null });
 
   // Block types for preview
   const blockTypes = [
@@ -366,21 +370,31 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this blog?')) return;
+    setDeleteDialog({ open: true, blogId: id });
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteDialog.blogId) return;
+    
     try {
       const { error } = await supabase
         .from('blogs')
         .delete()
-        .eq('id', id);
+        .eq('id', deleteDialog.blogId);
       if (error) throw error;
-      toast({ title: "Blog deleted successfully!" });
+      
+      toast({ 
+        title: "Blog deleted successfully!",
+        description: "The blog has been deleted from the system"
+      });
     } catch (error: unknown) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to delete blog",
         variant: "destructive",
       });
+    } finally {
+      setDeleteDialog({ open: false, blogId: null });
     }
   };
 
@@ -525,7 +539,6 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
   };
 
   // validation error shown in dialog when save fails
-  const [validationError, setValidationError] = React.useState<string | null>(null);
 
   const statusCounts = {
     all: blogs.length,
@@ -574,10 +587,11 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                data-testid="blog-search-input"
               />
             </div>
             {/* Category first so that the second combobox is the status filter as tests expect */}
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter} data-testid="category-filter">
               <SelectTrigger>
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
@@ -590,7 +604,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
               </SelectContent>
             </Select>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={setStatusFilter} data-testid="status-filter">
               <SelectTrigger>
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
@@ -630,6 +644,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                 setCategoryFilter('all');
               }}
               variant="outline"
+              data-testid="clear-filters"
             >
               Clear Filters
             </Button>
@@ -663,7 +678,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
             }
             }} data-testid="blog-dialog">
               <DialogTrigger asChild>
-                <Button onClick={() => setShowCreateForm(true)} className="bg-primary hover:bg-primary/90">
+                <Button onClick={() => setShowCreateForm(true)} className="bg-primary hover:bg-primary/90" data-testid="create-blog-button">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Blog
                 </Button>
@@ -723,17 +738,23 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                                    slug: slugAuto ? generateSlug(newTitle) : prev.slug,
                                  }));
                                  setBlogStructure(prev => ({...prev, title: newTitle}));
-                                 if (validationError) setValidationError(null);
-                               }}
-                               placeholder="Enter an engaging blog title..."
-                               className="text-lg mt-2"
-                               aria-required="true"
-                             />
-                             {validationError && (
-                               <div role="alert" className="mt-2 p-2 border border-destructive/50 bg-destructive/10 rounded text-sm text-destructive font-medium">
-                                 {validationError}
-                               </div>
-                             )}
+                                  if (validationError) setValidationError('');
+                                }}
+                                placeholder="Enter an engaging blog title..."
+                                className="text-lg mt-2"
+                                aria-required="true"
+                                data-testid="blog-title-input"
+                              />
+                              {validationError && (
+                                <div role="alert" className="mt-2 p-2 border border-destructive/50 bg-destructive/10 rounded text-sm text-destructive font-medium" data-testid="title-error">
+                                  Title is required
+                                </div>
+                              )}
+                              {!formData.content && !blogStructure.blocks.length && (
+                                <div role="alert" className="mt-2 p-2 border border-destructive/50 bg-destructive/10 rounded text-sm text-destructive font-medium" data-testid="content-error">
+                                  Content is required
+                                </div>
+                              )}
                            </div>
                            
                            <div>
@@ -745,9 +766,10 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                                value={formData.excerpt}
                                onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
                                rows={3}
-                               placeholder="Write a compelling excerpt to attract readers..."
-                               className="resize-none"
-                             />
+                                placeholder="Write a compelling excerpt to attract readers..."
+                                className="resize-none"
+                                data-testid="blog-excerpt-input"
+                              />
                              <div className="text-xs text-muted-foreground mt-1">
                                {formData.excerpt.length}/160 characters
                              </div>
@@ -764,13 +786,14 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                                   >
                                     Classic Editor
                                   </Button>
-                                  <Button
-                                    variant={editorMode === 'visual' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setEditorMode('visual')}
-                                  >
-                                    Visual Editor
-                                  </Button>
+                                   <Button
+                                     variant={editorMode === 'visual' ? 'default' : 'outline'}
+                                     size="sm"
+                                     onClick={() => setEditorMode('visual')}
+                                     data-testid="structured-editor-tab"
+                                   >
+                                     Visual Editor
+                                   </Button>
                                   <Button
                                     variant={editorMode === 'upload' ? 'default' : 'outline'}
                                     size="sm"
@@ -784,39 +807,41 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                               {editorMode === 'classic' ? (
                                 <div data-testid="classic-editor-container">
                                   <div className="border rounded-lg">
-                                     <AdvancedRichTextEditor
-                                       value={formData.content}
-                                       onChange={(content) => {
-                                         setFormData({...formData, content});
-                                         if (editingBlog) {
-                                           autoSave(content);
-                                         }
-                                       }}
-                                       placeholder="Start writing your amazing blog content..."
-                                       height="500px"
-                                     />
+                                      <AdvancedRichTextEditor
+                                        value={formData.content}
+                                        onChange={(content) => {
+                                          setFormData({...formData, content});
+                                          if (editingBlog) {
+                                            autoSave(content);
+                                          }
+                                        }}
+                                        placeholder="Start writing your amazing blog content..."
+                                        height="500px"
+                                        data-testid="rich-text-editor"
+                                      />
                                   </div>
                                 </div>
                               ) : editorMode === 'visual' ? (
                                 <div>
-                                  <DragDropBlogEditor
-                                    value={{
-                                      ...blogStructure,
-                                      title: formData.title || blogStructure.title,
-                                      featuredImage: formData.featured_image_url
-                                    }}
-                                    showMetaControls={false}
-                                    onChange={(structure) => {
-                                      setBlogStructure(structure);
-                                      // Sync the title back to formData to enable Create Post button
-                                      setFormData(prev => ({
-                                        ...prev,
-                                        title: structure.title,
-                                        featured_image_url: structure.featuredImage
-                                      }));
-                                    }}
-                                    className="min-h-[600px] border rounded-lg"
-                                  />
+                                   <DragDropBlogEditor
+                                     value={{
+                                       ...blogStructure,
+                                       title: formData.title || blogStructure.title,
+                                       featuredImage: formData.featured_image_url
+                                     }}
+                                     showMetaControls={false}
+                                     onChange={(structure) => {
+                                       setBlogStructure(structure);
+                                       // Sync the title back to formData to enable Create Post button
+                                       setFormData(prev => ({
+                                         ...prev,
+                                         title: structure.title,
+                                         featured_image_url: structure.featuredImage
+                                       }));
+                                     }}
+                                     className="min-h-[600px] border rounded-lg"
+                                     data-testid="editor-canvas"
+                                   />
                                 </div>
                               ) : (
                                 <div>
@@ -865,10 +890,10 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                            <div className="space-y-4">
                              <div>
                                <Label htmlFor="status" className="text-sm font-medium">Status</Label>
-                               <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                                 <SelectTrigger className="mt-1">
-                                   <SelectValue />
-                                 </SelectTrigger>
+                                <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})} data-testid="blog-status-select">
+                                  <SelectTrigger className="mt-1">
+                                    <SelectValue />
+                                  </SelectTrigger>
                                  <SelectContent>
                                    <SelectItem value="draft">
                                      <div className="flex items-center gap-2">
@@ -894,10 +919,10 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
 
                              <div>
                                <Label htmlFor="category" className="text-sm font-medium">Category</Label>
-                               <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                                 <SelectTrigger className="mt-1">
-                                   <SelectValue />
-                                 </SelectTrigger>
+                                <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})} data-testid="blog-category-select">
+                                  <SelectTrigger className="mt-1">
+                                    <SelectValue />
+                                  </SelectTrigger>
                                  <SelectContent>
                                    <SelectItem value="general">General</SelectItem>
                                    <SelectItem value="technology">Technology</SelectItem>
@@ -909,10 +934,11 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
 
                              <div className="flex items-center justify-between">
                                <Label className="text-sm font-medium">Featured Article</Label>
-                               <Switch
-                                 checked={formData.featured}
-                                 onCheckedChange={(checked) => setFormData({...formData, featured: checked})}
-                               />
+                                <Switch
+                                  checked={formData.featured}
+                                  onCheckedChange={(checked) => setFormData({...formData, featured: checked})}
+                                  data-testid="featured-toggle"
+                                />
                              </div>
                            </div>
                          </Card>
@@ -925,14 +951,15 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                                  <Input
                                    id="slug"
                                    aria-label="Slug"
-                                   value={formData.slug}
-                                   onChange={(e) => {
-                                     setFormData({...formData, slug: e.target.value});
-                                     setSlugAuto(false);
-                                   }}
-                                 placeholder="url-friendly-slug"
-                                 className="mt-1 font-mono text-sm"
-                               />
+                                    value={formData.slug}
+                                    onChange={(e) => {
+                                      setFormData({...formData, slug: e.target.value});
+                                      setSlugAuto(false);
+                                    }}
+                                  placeholder="url-friendly-slug"
+                                  className="mt-1 font-mono text-sm"
+                                  data-testid="blog-slug-input"
+                                />
                                <p className="text-xs text-muted-foreground mt-1">
                                  yoursite.com/blog/{formData.slug || 'your-slug'}
                                </p>
@@ -1171,6 +1198,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                         onClick={() => handleEdit(blog)}
                         className="hover:bg-primary/10"
                         aria-label="Edit blog"
+                        data-testid="edit-blog-button"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -1180,6 +1208,7 @@ const BlogManager: React.FC<BlogManagerProps> = ({ userRole }) => {
                         onClick={() => handleDelete(blog.id)}
                         className="hover:bg-destructive/10 hover:text-destructive"
                         aria-label="Delete blog"
+                        data-testid="delete-blog-button"
                       >
                         <Trash className="w-4 h-4" />
                       </Button>

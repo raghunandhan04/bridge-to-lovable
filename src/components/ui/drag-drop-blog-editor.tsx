@@ -350,6 +350,9 @@ const DragDropBlogEditor: React.FC<DragDropBlogEditorProps> = ({
               onChange={(e) => updateBlock(block.id, { text: e.target.value })}
               placeholder="Enter your text content here..."
               className="mt-1 min-h-[80px]"
+              data-testid={block.type === 'left-image-right-text' ? 'image-left-text' : 
+                          block.type === 'right-image-left-text' ? 'image-right-text' : 
+                          'text-block-content'}
             />
           </div>
         )}
